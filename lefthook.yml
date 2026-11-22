@@ -1,0 +1,4 @@
+extends:
+  - node_modules/@alphacifer/lefthook/biome.yml
+  - node_modules/@alphacifer/lefthook/rust.yml
+  - node_modules/@alphacifer/lefthook/typescript.yml

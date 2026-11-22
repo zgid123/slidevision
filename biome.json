@@ -1,0 +1,17 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "extends": [
+    "@alphacifer/biome/config"
+  ],
+  "files": {
+    "includes": [
+      "!**/*.svg",
+      "!**/*.html",
+      "!**/src-tauri/gen",
+      "!**/src-tauri/target"
+    ]
+  },
+  "vcs": {
+    "useIgnoreFile": true
+  }
+}

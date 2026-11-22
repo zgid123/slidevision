@@ -1,0 +1,42 @@
+{
+  "name": "slidevision",
+  "version": "0.0.1",
+  "description": "Slidev decks in one monorepo, plus a desktop app that presents them on two screens",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "update-packages": "pnpm update -i -r --latest",
+    "clear": "pnpm -r exec rimraf node_modules dist .turbo lib && pnpm rimraf node_modules .turbo",
+    "build": "turbo run build",
+    "desktop": "pnpm --filter desktop tauri dev"
+  },
+  "keywords": [
+    "slidev",
+    "monorepo",
+    "tauri",
+    "presentation"
+  ],
+  "author": "Alpha",
+  "license": "MIT",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.14.0",
+      "onFail": "download"
+    }
+  },
+  "devDependencies": {
+    "@alphacifer/biome": "^0.0.12",
+    "@alphacifer/lefthook": "^0.0.2",
+    "@alphacifer/tsconfig": "^0.0.16",
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "26.6.5",
+    "lefthook": "2.2.1",
+    "rimraf": "6.1.3",
+    "turbo": "2.11.7",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}

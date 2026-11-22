@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "skills": {
+    "css": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/css/SKILL.md",
+      "computedHash": "6796477cddf80836a1b828988cee320392dc21a9967b75db5c1041d03052dfea"
+    },
+    "domain-driven-design": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/domain-driven-design/SKILL.md",
+      "computedHash": "0bb8b07f0a09673c42260cd4684d76b0f908e202d0513edbc297c139f5eec234"
+    },
+    "grill-me": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/grill-me/SKILL.md",
+      "computedHash": "b1797cf6b9e087d1e236bef25e19e1206c5f6181ad63db24c392ce04707738c5"
+    },
+    "grilling": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/grilling/SKILL.md",
+      "computedHash": "7f1491e328dc99398041332ab43d82cef215b74a62049ec19d5f7c5a8db63479"
+    },
+    "principles": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/principles/SKILL.md",
+      "computedHash": "cd57ccb6f3e28308d5ac6ffafe6043d4b6b138c7a185cf30edd72fcaf82242a7"
+    },
+    "slidevjs": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/slidevjs/SKILL.md",
+      "computedHash": "58d8ebcd71f842033ed8d5e8d1274d8b70147b2a27e279769096333cd8fec4f2"
+    },
+    "testing": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/testing/SKILL.md",
+      "computedHash": "8938fce27ba4d54aa4b6bb9a94539dc628940fa2e07a93c94c747300fc706229"
+    },
+    "typescript": {
+      "source": "zgid123/skills",
+      "sourceType": "github",
+      "skillPath": "skills/typescript/SKILL.md",
+      "computedHash": "ee4c4f69544599b8b08785b80aac8076eaf19003b21e3e573db8444f6ecc9f45"
+    }
+  }
+}
