@@ -1,10 +1,8 @@
 # @slidevision/workspace
 
-Browse the [Slidev](https://sli.dev) decks in a repository from one local landing page.
+Browse and open the [Slidev](https://sli.dev) decks in a repository from one local landing page.
 
-Run `slidevision` at the root of a repository that holds several decks. It finds them through a `slidevision.json` file and serves a page with a card for each deck: its title, its cover image, and its status.
-
-> Opening decks from the landing page is not available yet. Each card's Open button is disabled until that lands.
+Run `slidevision` at the root of a repository that holds several decks. It finds them through a `slidevision.json` file and serves a page with a card for each deck: its title, its cover image, and its status. Clicking Open starts that deck's Slidev server and opens it in a new tab.
 
 ## Requirements
 
@@ -55,7 +53,20 @@ From the repository root:
 pnpm slidevision
 ```
 
-The command prints the landing page address, by default `http://localhost:3000/` (the next free port when 3000 is taken). Stop it with Ctrl+C.
+The command prints the landing page address, by default `http://localhost:3000/` (the next free port when 3000 is taken).
+
+### Opening decks
+
+Click **Open** on a card. The card shows **Starting…** while `slidev` starts for that deck, then **Running**, and the deck opens in a new tab with the normal Slidev view, presenter mode, and navigation. The landing page stays open.
+
+- Each deck runs its own Slidev server on a free port from 3030 upward, so several decks can be open at once.
+- Opening a running deck again reuses its server.
+- Slidev's hot reload works as usual: saving a change to an open deck updates its tab immediately.
+- If a deck cannot start, its card shows **Failed** with Slidev's output, for example a missing theme. Fix the deck and click **Retry**. Other decks keep running.
+
+### Stopping
+
+Press Ctrl+C. `slidevision` stops every deck server it started, then exits.
 
 The deck list is read when the command starts. After adding a deck, renaming one, or changing `slidevision.json`, restart `slidevision` to see the change.
 
@@ -87,6 +98,12 @@ node ../lib/cli.mjs
 ```
 
 The landing page is a Vue and UnoCSS app in `client/`, served from source by a Vite server that the command starts, the same way Slidev serves its own client.
+
+The tests start real Slidev servers and drive the page with Playwright. Install its browser once before running them:
+
+```sh
+pnpm exec playwright install chromium
+```
 
 ## License
 

@@ -38,7 +38,7 @@ describe('#DeckList', () => {
   });
 
   suite('when one deck has a cover and one does not', () => {
-    it('renders the cover image, the title card fallback, statuses, and disabled Open buttons', async () => {
+    it('renders the cover image and the title card fallback', async () => {
       const html = await render([
         {
           id: 'decks/alpha',
@@ -58,14 +58,49 @@ describe('#DeckList', () => {
           'src="/__slidevision/api/decks/decks%2Falpha/cover"',
         ),
         titleCard: /data-title-card[^>]*>\s*Gamma talk/.test(html),
-        statuses: html.match(/>Stopped</g)?.length,
-        disabledOpenButtons: html.match(/<button[^>]*disabled[^>]*>\s*Open/g)
-          ?.length,
+        statuses: html.match(/>\s*Stopped\s*</g)?.length,
       }).toEqual({
         cover: true,
         titleCard: true,
         statuses: 2,
-        disabledOpenButtons: 2,
+      });
+    });
+  });
+
+  suite('when a deck is starting', () => {
+    it('disables its Open button', async () => {
+      const html = await render([
+        {
+          id: 'decks/alpha',
+          name: 'Alpha talk',
+          status: 'starting',
+        },
+      ]);
+
+      expect(/<button[^>]*disabled[^>]*>\s*Open/.test(html)).toEqual(true);
+    });
+  });
+
+  suite('when a deck failed to start', () => {
+    it('shows the error and offers a retry', async () => {
+      const html = await render([
+        {
+          id: 'decks/alpha',
+          name: 'Alpha talk',
+          status: 'failed',
+          error: 'Slidev exited before the deck was ready.',
+        },
+      ]);
+
+      expect({
+        error:
+          /data-error[^>]*>Slidev exited before the deck was ready\.</.test(
+            html,
+          ),
+        retry: /<button[^>]*>\s*Retry\s*</.test(html),
+      }).toEqual({
+        error: true,
+        retry: true,
       });
     });
   });

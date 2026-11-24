@@ -11,3 +11,18 @@ export async function fetchDecks(): Promise<IDeckSummary[]> {
 
   return response.json();
 }
+
+export async function requestOpenDeck(id: string): Promise<IDeckSummary> {
+  const response = await fetch(
+    `${apiPrefix}/decks/${encodeURIComponent(id)}/open`,
+    {
+      method: 'POST',
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`The open request failed with status ${response.status}.`);
+  }
+
+  return response.json();
+}

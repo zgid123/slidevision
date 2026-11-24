@@ -4,7 +4,7 @@ Slidevision is a monorepo for [Slidev](https://sli.dev) decks, with a planned de
 
 The project is at an early stage. It has one package so far:
 
-- [`@slidevision/workspace`](packages/workspace): the `slidevision` command, which lists a repository's decks on a local landing page. Opening decks from the page is in progress.
+- [`@slidevision/workspace`](packages/workspace): the `slidevision` command, which lists a repository's decks on a local landing page and opens them on demand.
 
 The desktop app is not added yet.
 

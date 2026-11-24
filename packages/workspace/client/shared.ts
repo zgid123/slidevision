@@ -1,5 +1,7 @@
 export const apiPrefix = '/__slidevision/api';
 
+export const deckStatusEvent = 'slidevision:deck-status';
+
 export const deckStatus = {
   stopped: 'stopped',
   starting: 'starting',
@@ -14,4 +16,6 @@ export interface IDeckSummary {
   name: string;
   status: TDeckStatus;
   coverUrl?: string;
+  url?: string;
+  error?: string;
 }
