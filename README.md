@@ -24,6 +24,7 @@ Workspace packages go under `packages/`.
 | Command | What it does |
 |---|---|
 | `pnpm build` | Builds every workspace package with Turbo |
+| `pnpm test` | Runs every workspace package's tests with Turbo (run `pnpm exec playwright install chromium` once first) |
 | `pnpm exec biome check .` | Checks linting and formatting |
 | `pnpm clear` | Removes `node_modules`, build output and Turbo caches |
 | `pnpm update-packages` | Updates dependencies interactively |

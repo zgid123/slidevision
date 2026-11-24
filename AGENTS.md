@@ -9,7 +9,8 @@ The repository has root configuration only so far. `pnpm-workspace.yaml` include
 - `.agents/skills/`: project skills, installed from `zgid123/skills` and pinned in `skills-lock.json`. `.claude/skills/` links to the same folders.
 - `biome.json`, `tsconfig.json`, `lefthook.yml`: lint, type-check and pre-commit settings, extending `@alphacifer/biome` and `@alphacifer/tsconfig`.
 - `.changeset/`, `.github/workflows/release.yml`: Changesets configuration and the release workflow, which uses the shared Node.js and pnpm setup action from `zgid123/alpha-dx`.
-- `turbo.json`: `build` (outputs `dist/**` and `lib/**`) and `dev` tasks.
+- `.github/workflows/test.yml`: runs the tests of packages affected by a pull request, using the same setup action and Playwright's Chromium.
+- `turbo.json`: `build` (outputs `dist/**` and `lib/**`), `test`, and `dev` tasks.
 
 ## Working conventions
 
@@ -24,6 +25,7 @@ The repository has root configuration only so far. `pnpm-workspace.yaml` include
 ```sh
 pnpm install
 pnpm build                    # turbo run build across workspace packages
+pnpm test                     # turbo run test across workspace packages
 pnpm exec biome check .       # lint and format check
 ```
 

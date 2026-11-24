@@ -1,0 +1,30 @@
+name: Run tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/workspace/**'
+      - '.github/workflows/test.yml'
+
+jobs:
+  test:
+    name: Run affected tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Prepare Node.JS and pnpm
+        uses: zgid123/alpha-dx/gh-actions/preparation/nodejs@main
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run affected tests
+        run: pnpm turbo run test --filter="...[origin/${{ github.base_ref }}]"
