@@ -2,9 +2,20 @@
   "name": "@slidevision/workspace",
   "version": "0.0.1",
   "description": "Browse and open the Slidev decks in a repository from one local landing page",
+  "keywords": [
+    "slidev",
+    "slidevision",
+    "presentation",
+    "workspace"
+  ],
   "type": "module",
   "license": "MIT",
   "author": "Alpha",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zgid123/slidevision.git",
+    "directory": "packages/workspace"
+  },
   "bin": {
     "slidevision": "./lib/cli.mjs"
   },

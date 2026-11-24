@@ -8,12 +8,14 @@ The repository has root configuration only so far. `pnpm-workspace.yaml` include
 
 - `.agents/skills/`: project skills, installed from `zgid123/skills` and pinned in `skills-lock.json`. `.claude/skills/` links to the same folders.
 - `biome.json`, `tsconfig.json`, `lefthook.yml`: lint, type-check and pre-commit settings, extending `@alphacifer/biome` and `@alphacifer/tsconfig`.
+- `.changeset/`, `.github/workflows/release.yml`: Changesets configuration and the release workflow, which uses the shared Node.js and pnpm setup action from `zgid123/alpha-dx`.
 - `turbo.json`: `build` (outputs `dist/**` and `lib/**`) and `dev` tasks.
 
 ## Working conventions
 
 - Read the relevant `.agents/skills/*/SKILL.md` before changing code. Always start with `principles`. Use `typescript` for TypeScript, `css` for styles, `testing` for tests, `slidevjs` for anything about Slidev decks, and `domain-driven-design` for domain modeling. Use `grilling` when a plan needs its decisions tested.
 - Use pnpm only. Install third-party packages at exact versions; Alpha's own packages follow their existing version style. Put shared tooling in the root `package.json` and do not repeat it in workspace packages.
+- When a change affects a published package, add a changeset with `pnpm set-release` in the same pull request.
 - Keep changes scoped. Do not edit generated output such as `dist/`, `lib/` or `.turbo/` by hand.
 - The project is licensed under MIT (see `LICENSE`). Do not add license headers to source files.
 
