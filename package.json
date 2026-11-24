@@ -9,6 +9,7 @@
     "update-packages": "pnpm update -i -r --latest",
     "clear": "pnpm -r exec rimraf node_modules dist .turbo lib && pnpm rimraf node_modules .turbo",
     "build": "turbo run build",
+    "test": "turbo run test",
     "release": "pnpm build && changeset publish",
     "set-release": "changeset",
     "desktop": "pnpm --filter desktop tauri dev"
