@@ -1,0 +1,21 @@
+{
+  "name": "@slidevision/workspace",
+  "version": "0.0.1",
+  "description": "Browse and open the Slidev decks in a repository from one local landing page",
+  "type": "module",
+  "license": "MIT",
+  "author": "Alpha",
+  "bin": {
+    "slidevision": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
