@@ -3,6 +3,7 @@ import type { ViteDevServer } from 'vite';
 import { loadConfig } from './config/loadConfig';
 import type { IDeck } from './interface';
 import { createWorkspaceServer } from './server/createWorkspaceServer';
+import { DeckServers } from './server/DeckServers';
 import { findDecks } from './utils/findDecks';
 
 interface IStartWorkspaceParams {
@@ -10,9 +11,11 @@ interface IStartWorkspaceParams {
   port?: number;
 }
 
-interface IWorkspace {
+export interface IWorkspace {
   decks: IDeck[];
   server: ViteDevServer;
+  deckServers: DeckServers;
+  close: () => Promise<void>;
 }
 
 export async function startWorkspace({
@@ -26,14 +29,24 @@ export async function startWorkspace({
     root,
     patterns: config.decks,
   });
+  const deckServers = new DeckServers({
+    root,
+    decks,
+  });
   const server = await createWorkspaceServer({
     root,
     decks,
+    deckServers,
     port,
   });
 
   return {
     decks,
     server,
+    deckServers,
+    close: async () => {
+      await deckServers.stopAll();
+      await server.close();
+    },
   };
 }

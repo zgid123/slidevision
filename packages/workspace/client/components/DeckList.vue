@@ -5,6 +5,10 @@ import DeckCard from './DeckCard.vue';
 defineProps<{
   decks: IDeckSummary[];
 }>();
+
+defineEmits<{
+  open: [deck: IDeckSummary];
+}>();
 </script>
 
 <template>
@@ -21,7 +25,7 @@ defineProps<{
   </section>
   <ul v-else class="grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
     <li v-for="deck in decks" :key="deck.id">
-      <DeckCard :deck="deck" />
+      <DeckCard :deck="deck" @open="$emit('open', deck)" />
     </li>
   </ul>
 </template>

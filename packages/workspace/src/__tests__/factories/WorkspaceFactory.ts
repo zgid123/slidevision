@@ -1,15 +1,28 @@
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  mkdtemp,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Factory } from 'fishery';
 
 import type { ITestDeck } from './DeckFactory';
+
+const repositoryNodeModules = fileURLToPath(
+  new URL('../../../../../node_modules', import.meta.url),
+);
 
 export interface ITestWorkspace {
   root: string;
   config: string | null;
   decks: ITestDeck[];
   files: Record<string, string | Uint8Array>;
+  hasSlidev: boolean;
 }
 
 class WorkspaceFactory extends Factory<ITestWorkspace> {
@@ -24,6 +37,12 @@ class WorkspaceFactory extends Factory<ITestWorkspace> {
   withConfig(config: string): this {
     return this.params({
       config,
+    });
+  }
+
+  withSlidev(): this {
+    return this.params({
+      hasSlidev: true,
     });
   }
 
@@ -43,6 +62,10 @@ export const workspaceFactory = WorkspaceFactory.define(
 
       await writeFiles(root, toFiles(workspace));
 
+      if (workspace.hasSlidev) {
+        await symlink(repositoryNodeModules, join(root, 'node_modules'), 'dir');
+      }
+
       return {
         ...workspace,
         root,
@@ -56,6 +79,7 @@ export const workspaceFactory = WorkspaceFactory.define(
       }),
       decks = [],
       files = {},
+      hasSlidev = false,
       ...workspace
     } = params;
 
@@ -64,6 +88,7 @@ export const workspaceFactory = WorkspaceFactory.define(
       config,
       decks: decks as ITestDeck[],
       files: files as ITestWorkspace['files'],
+      hasSlidev,
       ...workspace,
     };
   },
@@ -107,6 +132,7 @@ function toFiles(
 function toSlidesSource(deck: ITestDeck): string {
   const headmatter = [
     ...(deck.title === null ? [] : [`title: '${deck.title}'`]),
+    `theme: ${deck.theme}`,
     ...(deck.background === undefined
       ? []
       : [`background: ${deck.background}`]),

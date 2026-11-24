@@ -1,12 +1,14 @@
 import { createReadStream } from 'node:fs';
-import type { ServerResponse } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { extname } from 'node:path';
 import type { Plugin } from 'vite';
 
-import { apiPrefix, deckStatus, type IDeckSummary } from '../../client/shared';
+import { apiPrefix, deckStatusEvent } from '../../client/shared';
 import type { IDeck } from '../interface';
+import type { DeckServers } from './DeckServers';
 
 const coverRoutePattern = /^\/decks\/([^/]+)\/cover$/;
+const openRoutePattern = /^\/decks\/([^/]+)\/open$/;
 
 const imageContentTypes: Record<string, string> = {
   '.avif': 'image/avif',
@@ -20,9 +22,13 @@ const imageContentTypes: Record<string, string> = {
 
 interface IWorkspacePluginParams {
   decks: IDeck[];
+  deckServers: DeckServers;
 }
 
-export function workspacePlugin({ decks }: IWorkspacePluginParams): Plugin {
+export function workspacePlugin({
+  decks,
+  deckServers,
+}: IWorkspacePluginParams): Plugin {
   const decksById = new Map(
     decks.map((deck) => {
       return [deck.id, deck] as const;
@@ -32,26 +38,42 @@ export function workspacePlugin({ decks }: IWorkspacePluginParams): Plugin {
   return {
     name: 'slidevision:workspace',
     configureServer(server) {
+      const unsubscribe = deckServers.subscribe((summary) => {
+        server.ws.send({
+          type: 'custom',
+          event: deckStatusEvent,
+          data: summary,
+        });
+      });
+
+      server.httpServer?.once('close', unsubscribe);
       server.middlewares.use(apiPrefix, (request, response, next) => {
         const pathname = new URL(request.url ?? '/', 'http://localhost')
           .pathname;
 
-        if (request.method !== 'GET') {
-          next();
-
-          return;
-        }
-
-        if (pathname === '/decks') {
-          sendJson(response, decks.map(toSummary));
+        if (request.method === 'GET' && pathname === '/decks') {
+          sendJson(response, 200, deckServers.summaries());
 
           return;
         }
 
         const coverId = coverRoutePattern.exec(pathname)?.[1];
 
-        if (coverId) {
+        if (request.method === 'GET' && coverId) {
           sendCover(response, decksById.get(decodeURIComponent(coverId)));
+
+          return;
+        }
+
+        const openId = openRoutePattern.exec(pathname)?.[1];
+
+        if (request.method === 'POST' && openId) {
+          void openDeck(
+            request,
+            response,
+            deckServers,
+            decodeURIComponent(openId),
+          ).catch(next);
 
           return;
         }
@@ -62,24 +84,59 @@ export function workspacePlugin({ decks }: IWorkspacePluginParams): Plugin {
   };
 }
 
-function toSummary(deck: IDeck): IDeckSummary {
-  return {
-    id: deck.id,
-    name: deck.name,
-    status: deckStatus.stopped,
-    ...(deck.cover ? { coverUrl: toCoverUrl(deck) } : {}),
-  };
-}
+async function openDeck(
+  request: IncomingMessage,
+  response: ServerResponse,
+  deckServers: DeckServers,
+  id: string,
+): Promise<void> {
+  if (!isSameOrigin(request)) {
+    sendJson(response, 403, {
+      error: 'Decks can only be opened from the landing page.',
+    });
 
-function toCoverUrl(deck: IDeck): string | undefined {
-  if (deck.cover?.kind === 'url') {
-    return deck.cover.url;
+    return;
   }
 
-  return `${apiPrefix}/decks/${encodeURIComponent(deck.id)}/cover`;
+  if (
+    !deckServers.has({
+      id,
+    })
+  ) {
+    sendNotFound(response);
+
+    return;
+  }
+
+  sendJson(
+    response,
+    200,
+    await deckServers.open({
+      id,
+    }),
+  );
 }
 
-function sendJson(response: ServerResponse, data: unknown): void {
+function isSameOrigin(request: IncomingMessage): boolean {
+  const origin = request.headers.origin;
+
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    return new URL(origin).host === request.headers.host;
+  } catch {
+    return false;
+  }
+}
+
+function sendJson(
+  response: ServerResponse,
+  statusCode: number,
+  data: unknown,
+): void {
+  response.statusCode = statusCode;
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
   response.end(JSON.stringify(data));
 }

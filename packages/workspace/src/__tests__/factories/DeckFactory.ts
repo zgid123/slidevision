@@ -4,6 +4,7 @@ import { Factory } from 'fishery';
 export interface ITestDeck {
   folder: string;
   title: string | null;
+  theme: string;
   files: Record<string, string | Uint8Array>;
   background?: string;
 }
@@ -25,6 +26,12 @@ class DeckFactory extends Factory<ITestDeck> {
     });
   }
 
+  withMissingTheme(): this {
+    return this.params({
+      theme: 'slidevision-missing-theme',
+    });
+  }
+
   untitled(): this {
     return this.params({
       title: null,
@@ -36,6 +43,7 @@ export const deckFactory = DeckFactory.define(({ sequence, params }) => {
   const {
     folder = `decks/deck-${sequence}`,
     title = faker.lorem.words(3),
+    theme = 'none',
     files = {},
     ...deck
   } = params;
@@ -43,6 +51,7 @@ export const deckFactory = DeckFactory.define(({ sequence, params }) => {
   return {
     folder,
     title,
+    theme,
     files: files as ITestDeck['files'],
     ...deck,
   };

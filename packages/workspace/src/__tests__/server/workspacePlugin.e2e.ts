@@ -1,6 +1,4 @@
-import type { ViteDevServer } from 'vite';
-
-import { startWorkspace } from '../../startWorkspace';
+import { type IWorkspace, startWorkspace } from '../../startWorkspace';
 import {
   deckFactory,
   type ITestDeck,
@@ -14,7 +12,7 @@ import {
 
 describe('[Workspace API]', () => {
   let workspace: ITestWorkspace;
-  let server: ViteDevServer;
+  let started: IWorkspace;
   let baseUrl: string;
   let alpha: ITestDeck;
   let beta: ITestDeck;
@@ -32,16 +30,15 @@ describe('[Workspace API]', () => {
       folder: 'decks/gamma',
       background: './assets/missing.png',
     });
-    workspace = await workspaceFactory.create({
+    workspace = await workspaceFactory.withSlidev().create({
       decks: [alpha, beta, gamma],
     });
-
-    ({ server } = await startWorkspace({
+    started = await startWorkspace({
       root: workspace.root,
       port: 0,
-    }));
+    });
 
-    const url = server.resolvedUrls?.local[0];
+    const url = started.server.resolvedUrls?.local[0];
 
     if (!url) {
       throw new Error('The workspace server has no local URL.');
@@ -51,7 +48,7 @@ describe('[Workspace API]', () => {
   });
 
   afterAll(async () => {
-    await server.close();
+    await started.close();
     await removeWorkspace(workspace);
   });
 
@@ -119,6 +116,64 @@ describe('[Workspace API]', () => {
         );
 
         expect(response.status).toEqual(404);
+      });
+    });
+  });
+
+  describe('POST /__slidevision/api/decks/:id/open', () => {
+    const openDeck = (id: string, origin?: string): Promise<Response> => {
+      return fetch(
+        `${baseUrl}/__slidevision/api/decks/${encodeURIComponent(id)}/open`,
+        {
+          method: 'POST',
+          headers: origin
+            ? {
+                origin,
+              }
+            : {},
+        },
+      );
+    };
+
+    suite('when the request has no Origin header', () => {
+      it('refuses to open the deck', async () => {
+        const response = await openDeck('decks/alpha');
+
+        expect(response.status).toEqual(403);
+      });
+    });
+
+    suite('when the request comes from another site', () => {
+      it('refuses to open the deck', async () => {
+        const response = await openDeck('decks/alpha', 'http://example.com');
+
+        expect(response.status).toEqual(403);
+      });
+    });
+
+    suite('when the id is not a configured deck', () => {
+      it('returns not found', async () => {
+        const response = await openDeck('decks/unknown', baseUrl);
+
+        expect(response.status).toEqual(404);
+      });
+    });
+
+    suite('when the landing page opens a stopped deck', () => {
+      it('starts the deck and returns its URL', async () => {
+        const response = await openDeck('decks/alpha', baseUrl);
+        const deck = (await response.json()) as {
+          status: string;
+          url: string;
+        };
+
+        expect({
+          status: deck.status,
+          isServing: (await fetch(deck.url)).ok,
+        }).toEqual({
+          status: 'running',
+          isServing: true,
+        });
       });
     });
   });

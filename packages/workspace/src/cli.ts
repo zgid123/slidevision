@@ -3,11 +3,19 @@ import { ConfigError } from './config/ConfigError';
 import { startWorkspace } from './startWorkspace';
 
 try {
-  const { decks, server } = await startWorkspace({
+  const workspace = await startWorkspace({
     root: process.cwd(),
   });
+  const { decks, server } = workspace;
   const url = server.resolvedUrls?.local[0] ?? '';
+  const shutdown = async (): Promise<void> => {
+    console.log('\n  Stopping decks…');
+    await workspace.close();
+    process.exit(0);
+  };
 
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
   console.log(
     `\n  Slidevision  ${decks.length} deck${decks.length === 1 ? '' : 's'}\n\n  landing page  > ${url}\n`,
   );
