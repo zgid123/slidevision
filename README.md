@@ -2,7 +2,11 @@
 
 Slidevision is a monorepo for [Slidev](https://sli.dev) decks, with a planned desktop app that presents them like Keynote: the presenter view stays on your screen and the slides go fullscreen on the projector.
 
-The project is at an early stage. The repository has the shared tooling only; decks and the desktop app are not added yet.
+The project is at an early stage. It has one package so far:
+
+- [`@slidevision/workspace`](packages/workspace): the `slidevision` command, which lists a repository's decks on a local landing page. Opening decks from the page is in progress.
+
+The desktop app is not added yet.
 
 ## Requirements
 

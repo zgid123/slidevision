@@ -1,6 +1,7 @@
 {
   "extends": "@alphacifer/tsconfig/esm",
   "include": [
-    "src"
+    "src",
+    "client"
   ]
 }
