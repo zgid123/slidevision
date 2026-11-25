@@ -1,1 +1,1 @@
-mod recent_projects_repository;
+mod recent_projects_repository_test;

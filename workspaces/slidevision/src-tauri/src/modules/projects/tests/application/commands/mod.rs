@@ -1,3 +1,4 @@
-mod close_project;
-mod open_project;
-mod remove_recent_project;
+mod close_project_test;
+mod open_project_test;
+mod remove_recent_project_test;
+mod start_deck_test;

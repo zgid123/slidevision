@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted } from 'vue';
 
 import DeckList from '#/features/decks/components/DeckList.vue';
-import DeckListSkeleton from '#/features/decks/components/DeckListSkeleton.vue';
+import CardGridSkeleton from '#/features/decks/components/CardGridSkeleton.vue';
 import DeckScreen from '#/features/decks/components/DeckScreen.vue';
 import WelcomeScreen from '#/features/projects/components/WelcomeScreen.vue';
 import { projectKind } from '@contracts/project';
@@ -61,8 +61,8 @@ onUnmounted(() => {
       @open="(path) => session.open({ path })"
       @remove="(path) => session.removeRecent({ path })"
     />
-    <div v-else class="p-10">
-      <header class="mb-8 flex items-center justify-between gap-4">
+    <div v-else class="flex h-screen flex-col p-10">
+      <header class="mb-8 flex shrink-0 items-center justify-between gap-4">
         <div class="min-w-0">
           <h1 class="truncate text-2xl font-semibold">{{ projectName }}</h1>
           <p class="truncate text-sm text-foreground-secondary" :title="root">
@@ -78,21 +78,24 @@ onUnmounted(() => {
           Close Project
         </button>
       </header>
-      <DeckListSkeleton
-        v-if="session.screen.name === screenName.opening"
-        :label="`Opening ${root}`"
-      />
-      <DeckList
-        v-else-if="session.screen.name === screenName.decks"
-        :decks="session.screen.project.decks"
-        @open="(deck) => session.openDeck({ deck })"
-      />
-      <DeckScreen
-        v-else-if="session.screen.name === screenName.deck"
-        :deck="session.screen.deck"
-        :can-go-back="session.screen.project.kind === projectKind.workspace"
-        @back="session.back()"
-      />
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        <CardGridSkeleton
+          v-if="session.screen.name === screenName.opening"
+          :label="`Opening ${root}`"
+        />
+        <DeckList
+          v-else-if="session.screen.name === screenName.decks"
+          :decks="session.screen.project.decks"
+          @open="(deck) => session.openDeck({ deck })"
+        />
+        <DeckScreen
+          v-else-if="session.screen.name === screenName.deck"
+          :key="session.screen.deck.id"
+          :deck="session.screen.deck"
+          :can-go-back="session.screen.project.kind === projectKind.workspace"
+          @back="session.back()"
+        />
+      </div>
     </div>
   </main>
 </template>

@@ -6,7 +6,8 @@ use tauri::{AppHandle, Manager};
 
 use crate::modules::projects::application::commands::{
     CloseProjectCommandHandler, OpenProjectCommand, OpenProjectCommandHandler,
-    RemoveRecentProjectCommand, RemoveRecentProjectCommandHandler,
+    RemoveRecentProjectCommand, RemoveRecentProjectCommandHandler, StartDeckCommand,
+    StartDeckCommandHandler,
 };
 use crate::modules::projects::application::queries::{
     ListRecentProjectsQueryHandler, RecentProjectView,
@@ -17,6 +18,7 @@ pub struct Handlers {
     pub close_project: CloseProjectCommandHandler,
     pub remove_recent_project: RemoveRecentProjectCommandHandler,
     pub list_recent_projects: ListRecentProjectsQueryHandler,
+    pub start_deck: StartDeckCommandHandler,
 }
 
 #[derive(Serialize)]
@@ -85,6 +87,18 @@ pub fn remove_recent_project(
         .execute(RemoveRecentProjectCommand { path })
         .map(to_responses)
         .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn start_deck(app: AppHandle, id: String) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        app.state::<Handlers>()
+            .start_deck
+            .execute(StartDeckCommand { id })
+            .map_err(|error| error.to_string())
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 
 fn to_responses(views: Vec<RecentProjectView>) -> Vec<RecentProjectResponse> {

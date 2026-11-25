@@ -1,8 +1,9 @@
 import { createInterface } from 'node:readline';
 import type { Readable, Writable } from 'node:stream';
+import type { IDeckRun } from '@contracts/project';
 
 import { isRecord } from '../utils/isRecord';
-import { openProject } from './openProject';
+import { HostSession } from './HostSession';
 
 export interface IHostRequest {
   id: number;
@@ -22,6 +23,17 @@ export type THostResponse =
       };
     };
 
+export const hostEvent = {
+  deckRun: 'deckRun',
+} as const;
+
+export interface IHostEvent {
+  event: typeof hostEvent.deckRun;
+  data: IDeckRun;
+}
+
+export type THostMessage = THostResponse | IHostEvent;
+
 interface IRunHostParams {
   input: Readable;
   output: Writable;
@@ -31,9 +43,15 @@ export async function runHost({
   input,
   output,
 }: IRunHostParams): Promise<void> {
-  const send = (response: THostResponse): void => {
-    output.write(`${JSON.stringify(response)}\n`);
+  const send = (message: THostMessage): void => {
+    output.write(`${JSON.stringify(message)}\n`);
   };
+  const session = new HostSession((run) => {
+    send({
+      event: hostEvent.deckRun,
+      data: run,
+    });
+  });
   const pending = new Set<Promise<void>>();
   const lines = createInterface({
     input,
@@ -58,7 +76,7 @@ export async function runHost({
       continue;
     }
 
-    const task = handle(request)
+    const task = handle(session, request)
       .then((result) => {
         send({
           id: request.id,
@@ -81,23 +99,47 @@ export async function runHost({
   }
 
   await Promise.all(pending);
+  await session.stopAll();
 }
 
-async function handle({ method, params }: IHostRequest): Promise<unknown> {
+async function handle(
+  session: HostSession,
+  { method, params }: IHostRequest,
+): Promise<unknown> {
   switch (method) {
     case 'open': {
-      if (typeof params.root !== 'string') {
-        throw new Error('"open" needs a "root" folder path.');
-      }
-
-      return openProject({
-        root: params.root,
+      return session.open({
+        root: stringParam(method, params, 'root'),
       });
+    }
+    case 'startDeck': {
+      return session.startDeck({
+        id: stringParam(method, params, 'id'),
+      });
+    }
+    case 'stopAll': {
+      await session.stopAll();
+
+      return null;
     }
     default: {
       throw new Error(`Unknown host method "${method}".`);
     }
   }
+}
+
+function stringParam(
+  method: string,
+  params: Record<string, unknown>,
+  name: string,
+): string {
+  const value = params[name];
+
+  if (typeof value !== 'string') {
+    throw new Error(`"${method}" needs a "${name}" string.`);
+  }
+
+  return value;
 }
 
 function parseRequest(line: string): IHostRequest | null {

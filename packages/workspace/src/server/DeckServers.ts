@@ -1,8 +1,5 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { IDeck } from '@contracts/project';
 
@@ -12,7 +9,9 @@ import {
   type IDeckSummary,
   type TDeckStatus,
 } from '../../client/shared';
+import { slidevStarter } from '../paths';
 import { findFreePort } from '../utils/findFreePort';
+import { resolveSlidev } from '../utils/resolveSlidev';
 
 const firstDeckPort = 3_030;
 const startupTimeoutMs = 60_000;
@@ -115,7 +114,9 @@ export class DeckServers {
     let closed: Promise<unknown> | undefined;
 
     try {
-      const bin = this.#resolveSlidevBin();
+      const { bin } = resolveSlidev({
+        root: this.#root,
+      });
       const port = await findFreePort({
         from: firstDeckPort,
         exclude: this.#usedPorts(),
@@ -123,7 +124,7 @@ export class DeckServers {
 
       child = spawn(
         process.execPath,
-        [bin, deck.entry, '--port', String(port)],
+        [slidevStarter, bin, deck.entry, '--port', String(port)],
         {
           cwd: deck.dir,
           env: withoutColor(process.env),
@@ -199,25 +200,6 @@ export class DeckServers {
           .filter(Boolean)
           .join('\n\n'),
       });
-    }
-  }
-
-  #resolveSlidevBin(): string {
-    const require = createRequire(join(this.#root, 'package.json'));
-
-    try {
-      const packagePath = require.resolve('@slidev/cli/package.json');
-      const { bin } = JSON.parse(readFileSync(packagePath, 'utf8')) as {
-        bin: {
-          slidev: string;
-        };
-      };
-
-      return join(dirname(packagePath), bin.slidev);
-    } catch {
-      throw new Error(
-        `Slidev is not installed in ${this.#root}. Install @slidev/cli at the repository root.`,
-      );
     }
   }
 

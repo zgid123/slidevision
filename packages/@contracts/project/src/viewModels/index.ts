@@ -1,2 +1,3 @@
-export type { IDeck, TDeckCover } from './deck';
-export { projectKind, type TProject } from './project';
+export * from './deck';
+export * from './deckRun';
+export * from './project';

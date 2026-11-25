@@ -1,1 +1,1 @@
-mod recent_projects;
+mod recent_projects_test;
