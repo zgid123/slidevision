@@ -1,7 +1,7 @@
+import type { IDeck } from '@contracts/project';
 import type { ViteDevServer } from 'vite';
 
 import { loadConfig } from './config/loadConfig';
-import type { IDeck } from './interface';
 import { createWorkspaceServer } from './server/createWorkspaceServer';
 import { DeckServers } from './server/DeckServers';
 import { findDecks } from './utils/findDecks';

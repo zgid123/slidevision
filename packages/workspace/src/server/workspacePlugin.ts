@@ -1,10 +1,10 @@
 import { createReadStream } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { extname } from 'node:path';
+import type { IDeck } from '@contracts/project';
 import type { Plugin } from 'vite';
 
 import { apiPrefix, deckStatusEvent } from '../../client/shared';
-import type { IDeck } from '../interface';
 import type { DeckServers } from './DeckServers';
 
 const coverRoutePattern = /^\/decks\/([^/]+)\/cover$/;

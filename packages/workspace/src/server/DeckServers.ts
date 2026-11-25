@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
+import type { IDeck } from '@contracts/project';
 
 import {
   apiPrefix,
@@ -11,7 +12,6 @@ import {
   type IDeckSummary,
   type TDeckStatus,
 } from '../../client/shared';
-import type { IDeck } from '../interface';
 import { findFreePort } from '../utils/findFreePort';
 
 const firstDeckPort = 3_030;

@@ -12,7 +12,7 @@
     "test": "turbo run test",
     "release": "pnpm build && changeset publish",
     "set-release": "changeset",
-    "desktop": "pnpm --filter desktop tauri dev"
+    "desktop": "turbo run build --filter=@slidevision/workspace && pnpm --filter @slidevision/desktop tauri dev"
   },
   "keywords": [
     "slidev",

@@ -1,0 +1,3 @@
+[workspace]
+members = ["workspaces/slidevision/src-tauri"]
+resolver = "3"

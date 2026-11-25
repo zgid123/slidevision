@@ -1,9 +1,9 @@
 import { join } from 'node:path';
+import type { IDeck } from '@contracts/project';
 import vue from '@vitejs/plugin-vue';
 import UnoCSS from 'unocss/vite';
 import { createServer, type ViteDevServer } from 'vite';
 
-import type { IDeck } from '../interface';
 import { clientDir } from '../paths';
 import type { DeckServers } from './DeckServers';
 import { unoConfig } from './unoConfig';
