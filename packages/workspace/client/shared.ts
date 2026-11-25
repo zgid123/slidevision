@@ -1,15 +1,10 @@
+import type { TDeckStatus } from '@contracts/project';
+
+export { deckStatus, type TDeckStatus } from '@contracts/project';
+
 export const apiPrefix = '/__slidevision/api';
 
 export const deckStatusEvent = 'slidevision:deck-status';
-
-export const deckStatus = {
-  stopped: 'stopped',
-  starting: 'starting',
-  running: 'running',
-  failed: 'failed',
-} as const;
-
-export type TDeckStatus = (typeof deckStatus)[keyof typeof deckStatus];
 
 export interface IDeckSummary {
   id: string;

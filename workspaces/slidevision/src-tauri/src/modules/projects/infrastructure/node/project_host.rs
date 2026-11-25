@@ -14,11 +14,12 @@ use serde_json::{Value, json};
 use crate::infrastructure::shell::command;
 use crate::modules::projects::domain::errors::ProjectError;
 use crate::modules::projects::domain::services::{
-    ProjectHost as ProjectHostContract, ProjectHostLauncher,
+    DeckRunListener, ProjectHost as ProjectHostContract, ProjectHostLauncher,
 };
 
 const STDERR_LIMIT: usize = 4_000;
 const STOP_TIMEOUT: Duration = Duration::from_secs(10);
+const DECK_RUN_EVENT: &str = "deckRun";
 
 type TReply = Result<Value, String>;
 type TPending = Arc<Mutex<HashMap<u64, Sender<TReply>>>>;
@@ -32,10 +33,12 @@ struct ProjectHost {
 }
 
 #[derive(Deserialize)]
-struct Response {
+struct Message {
     id: Option<u64>,
     result: Option<Value>,
     error: Option<ResponseError>,
+    event: Option<String>,
+    data: Option<Value>,
 }
 
 #[derive(Deserialize)]
@@ -44,7 +47,11 @@ struct ResponseError {
 }
 
 impl ProjectHost {
-    fn start(node: &Path, script: &Path) -> Result<ProjectHost, String> {
+    fn start(
+        node: &Path,
+        script: &Path,
+        listener: Arc<dyn DeckRunListener>,
+    ) -> Result<ProjectHost, String> {
         let mut child = command(node)
             .arg(script)
             .stdin(Stdio::piped())
@@ -70,7 +77,7 @@ impl ProjectHost {
 
             move || {
                 for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-                    deliver(&pending, &line);
+                    deliver(&pending, listener.as_ref(), &line);
                 }
 
                 is_closed.store(true, Ordering::SeqCst);
@@ -164,6 +171,16 @@ impl ProjectHostContract for ProjectHost {
         .map_err(ProjectError::Host)
     }
 
+    fn start_deck(&self, id: &str) -> Result<Value, ProjectError> {
+        self.request(
+            "startDeck",
+            json!({
+                "id": id,
+            }),
+        )
+        .map_err(ProjectError::Host)
+    }
+
     fn stop(&self) {
         self.shutdown();
     }
@@ -171,35 +188,45 @@ impl ProjectHostContract for ProjectHost {
 
 pub struct Launcher {
     script: PathBuf,
+    listener: Arc<dyn DeckRunListener>,
 }
 
 impl Launcher {
-    pub fn new(script: PathBuf) -> Self {
-        Self { script }
+    pub fn new(script: PathBuf, listener: Arc<dyn DeckRunListener>) -> Self {
+        Self { script, listener }
     }
 }
 
 impl ProjectHostLauncher for Launcher {
     fn launch(&self, node: &Path) -> Result<Box<dyn ProjectHostContract>, ProjectError> {
-        ProjectHost::start(node, &self.script)
+        ProjectHost::start(node, &self.script, Arc::clone(&self.listener))
             .map(|host| Box::new(host) as Box<dyn ProjectHostContract>)
             .map_err(ProjectError::Host)
     }
 }
 
-fn deliver(pending: &TPending, line: &str) {
-    let Ok(response) = serde_json::from_str::<Response>(line) else {
+fn deliver(pending: &TPending, listener: &dyn DeckRunListener, line: &str) {
+    let Ok(message) = serde_json::from_str::<Message>(line) else {
         return;
     };
-    let Some(id) = response.id else {
+
+    if message.event.as_deref() == Some(DECK_RUN_EVENT) {
+        if let Some(run) = message.data {
+            listener.deck_run_changed(run);
+        }
+
+        return;
+    }
+
+    let Some(id) = message.id else {
         return;
     };
     let Some(reply) = pending.lock().unwrap().remove(&id) else {
         return;
     };
-    let result = match response.error {
+    let result = match message.error {
         Some(error) => Err(error.message),
-        None => Ok(response.result.unwrap_or(Value::Null)),
+        None => Ok(message.result.unwrap_or(Value::Null)),
     };
 
     let _ = reply.send(result);

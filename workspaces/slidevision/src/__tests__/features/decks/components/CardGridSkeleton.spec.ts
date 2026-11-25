@@ -1,10 +1,10 @@
 import { mount } from '@vue/test-utils';
 
-import DeckListSkeleton from '#/features/decks/components/DeckListSkeleton.vue';
+import CardGridSkeleton from '#/features/decks/components/CardGridSkeleton.vue';
 
-describe('#DeckListSkeleton', () => {
+describe('#CardGridSkeleton', () => {
   it('announces what is loading', () => {
-    const wrapper = mount(DeckListSkeleton, {
+    const wrapper = mount(CardGridSkeleton, {
       props: {
         label: 'Opening /talks/meetup',
       },
@@ -16,13 +16,13 @@ describe('#DeckListSkeleton', () => {
     expect(status.attributes('aria-busy')).toBe('true');
   });
 
-  it('shows a row of placeholder deck cards', () => {
-    const wrapper = mount(DeckListSkeleton, {
+  it('shows two rows of placeholder cards', () => {
+    const wrapper = mount(CardGridSkeleton, {
       props: {
         label: 'Opening /talks/meetup',
       },
     });
 
-    expect(wrapper.findAll('[data-deck-skeleton]')).toHaveLength(6);
+    expect(wrapper.findAll('[data-card-skeleton]')).toHaveLength(6);
   });
 });

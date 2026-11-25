@@ -17,7 +17,8 @@ pub fn run() {
             projects::open_project,
             projects::close_project,
             projects::recent_projects,
-            projects::remove_recent_project
+            projects::remove_recent_project,
+            projects::start_deck
         ])
         .build(tauri::generate_context!())
         .expect("error while building Slidevision")

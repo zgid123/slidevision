@@ -31,3 +31,8 @@ fn host_errors_pass_the_message_through() {
         "/empty has no slidevision.json or slides.md."
     );
 }
+
+#[test]
+fn no_project_says_so() {
+    assert_eq!(ProjectError::NoProject.to_string(), "No project is open.");
+}

@@ -1,9 +1,11 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'tsdown';
 
+const workspaceHost = import.meta.resolve('@slidevision/workspace/host');
+
 export default defineConfig({
   entry: {
-    host: fileURLToPath(import.meta.resolve('@slidevision/workspace/host')),
+    host: fileURLToPath(workspaceHost),
   },
   outDir: 'lib',
   platform: 'node',
@@ -13,4 +15,10 @@ export default defineConfig({
     alwaysBundle: [/./],
     onlyBundle: false,
   },
+  copy: [
+    {
+      from: fileURLToPath(new URL('./slidev', workspaceHost)),
+      to: 'lib',
+    },
+  ],
 });

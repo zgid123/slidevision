@@ -1,4 +1,4 @@
-import { projectKind, type TProject } from '@contracts/project';
+import { deckStatus, projectKind, type TProject } from '@contracts/project';
 import { emit } from '@tauri-apps/api/event';
 import { clearMocks, mockConvertFileSrc, mockIPC } from '@tauri-apps/api/mocks';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
@@ -62,6 +62,13 @@ describe('#App', () => {
           }
           case 'close_project': {
             return null;
+          }
+          case 'start_deck': {
+            return {
+              id: (args as { id: string }).id,
+              status: deckStatus.running,
+              url: 'http://localhost:3030/',
+            };
           }
           case 'plugin:dialog|open': {
             return pickedFolder;

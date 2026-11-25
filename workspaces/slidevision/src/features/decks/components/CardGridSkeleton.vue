@@ -15,7 +15,7 @@ const placeholderCount = 6;
       <li
         v-for="index in placeholderCount"
         :key="index"
-        data-deck-skeleton
+        data-card-skeleton
         class="animate-pulse overflow-hidden rounded-lg border border-stroke-primary bg-primary"
       >
         <div class="aspect-video bg-tertiary" />

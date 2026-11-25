@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost https: data:; style-src 'self' 'unsafe-inline'",
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost https: data:; style-src 'self' 'unsafe-inline'; frame-src http://localhost:*",
       "assetProtocol": {
         "enable": true,
         "scope": []
@@ -43,7 +43,8 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../lib/host.mjs": "host.mjs"
+      "../lib/host.mjs": "lib/host.mjs",
+      "../lib/slidev/": "lib/slidev/"
     }
   }
 }

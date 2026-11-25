@@ -8,6 +8,7 @@ pub enum ProjectError {
     NodeNotFound,
     NodeVersionUnknown { node: PathBuf },
     NodeTooOld { node: PathBuf, version: NodeVersion },
+    NoProject,
     Host(String),
     Storage(String),
 }
@@ -33,6 +34,7 @@ impl fmt::Display for ProjectError {
                 minimum(),
                 node.display()
             ),
+            Self::NoProject => write!(formatter, "No project is open."),
             Self::Host(message) => write!(formatter, "{message}"),
             Self::Storage(message) => {
                 write!(formatter, "Could not save the recent projects: {message}")
