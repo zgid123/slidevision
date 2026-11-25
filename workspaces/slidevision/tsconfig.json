@@ -1,0 +1,13 @@
+{
+  "extends": "@alphacifer/tsconfig/esm",
+  "compilerOptions": {
+    "paths": {
+      "#/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

@@ -1,0 +1,12 @@
+import vue from '@vitejs/plugin-vue';
+import UnoCSS from 'unocss/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  clearScreen: false,
+  plugins: [vue(), UnoCSS()],
+  server: {
+    port: 1_420,
+    strictPort: true,
+  },
+});

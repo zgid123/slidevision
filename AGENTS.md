@@ -4,7 +4,12 @@
 
 Slidevision is a pnpm and Turbo monorepo. It will hold Slidev decks and a desktop app that presents them on two screens, with the presenter view on the laptop and the slides on the projector. Run commands from the repository root.
 
-The repository has root configuration only so far. `pnpm-workspace.yaml` includes `packages/**`; add workspace packages there and list any new top-level folders in it.
+`pnpm-workspace.yaml` includes `packages/**` (published libraries) and `workspaces/**` (apps); list any new top-level folders in it.
+
+- `packages/@contracts/project`: `@contracts/project`, private. The `TProject`, `IDeck` and `TDeckCover` shapes and `projectKind` that the workspace host sends and the desktop UI receives. Both import it as a `workspace:*` dev dependency; the published workspace build inlines it, so npm users never install it.
+- `packages/workspace`: `@slidevision/workspace`, the `slidevision` CLI and browser landing page. Its `./host` export is the Node process the desktop app drives over newline-delimited JSON on stdin and stdout.
+- `workspaces/slidevision`: `@slidevision/desktop`, the Tauri 2 app (Vue and UnoCSS UI in `src/`, Rust in `src-tauri/`). Its build bundles the workspace host into `lib/host.mjs`, which Tauri ships as a resource and runs with the user's Node.js. The UI is grouped by feature: `src/features/<feature>/` holds that feature's `components/`, `interface.ts`, `api.ts` (Tauri calls), `hooks/` (composables, `use*.ts`) and `utils/`; `App.vue` only switches screens. Import across features with `#/` (`#/features/decks/interface`), resolved by `package.json` `imports` for Vite and `tsconfig.json` `paths` for TypeScript. Tests mirror `src/` under `src/__tests__/`. The Rust side follows the `domain-driven-design` skill's modular-monolith layout in Rust form. Root `src-tauri/src/adapters/tauri/` assembles the app (`app.rs` the builder and command list, `menu.rs` the app menu, `wire.rs` calling each module's `wire`), and root `infrastructure/` holds only what modules share (`shell/command.rs`). Each bounded context lives in `src-tauri/src/modules/<context>/` (today only `projects`), with its own `adapters/tauri/` (`commands.rs`, `menu.rs` items, `wire.rs` building its handlers) and: `domain/` (`entities/`, `value_objects/`, `errors/`, `repositories/` traits, `services/` traits), `application/` (`commands/` and `queries/` as `<Name>CommandHandler` structs with `execute`, plus `state/`), `infrastructure/<technology>/` (`json/`, `shell/`, `node/`) implementing the domain traits. `lib.rs` only calls `adapters::tauri::run`. Modules and files are snake_case, traits have no `I` prefix, and each content folder's `mod.rs` is its barrel. Source files hold no test code: tests live in `modules/<context>/tests/`, mirroring the source paths (`tests/domain/entities/recent_projects.rs` tests `domain/entities/recent_projects.rs`), and handler tests use the in-memory fakes in `tests/fakes/`. The context's `mod.rs` declares them with `#[cfg(test)] mod tests;`.
+- `Cargo.toml`: the Cargo workspace for the Tauri crate; the pre-commit hook runs `cargo clippy --workspace` from the root.
 
 - `.agents/skills/`: project skills, installed from `zgid123/skills` and pinned in `skills-lock.json`. `.claude/skills/` links to the same folders.
 - `biome.json`, `tsconfig.json`, `lefthook.yml`: lint, type-check and pre-commit settings, extending `@alphacifer/biome` and `@alphacifer/tsconfig`.
@@ -27,6 +32,8 @@ pnpm install
 pnpm build                    # turbo run build across workspace packages
 pnpm test                     # turbo run test across workspace packages
 pnpm exec biome check .       # lint and format check
+pnpm desktop                  # build the workspace host, then run the app with tauri dev
+cargo test --workspace        # Rust unit tests
 ```
 
 The pre-commit hook runs `biome check --write` on staged files.

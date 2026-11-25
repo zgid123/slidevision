@@ -1,7 +1,7 @@
 import { glob, readFile, stat } from 'node:fs/promises';
 import { basename, join, relative, resolve, sep } from 'node:path';
+import type { IDeck, TDeckCover } from '@contracts/project';
 
-import type { IDeck, TDeckCover } from '../interface';
 import { readHeadmatter } from './readHeadmatter';
 
 const entryFileName = 'slides.md';
@@ -31,7 +31,10 @@ export async function findDecks({
 
   const decks = await Promise.all(
     [...folders].map((dir) => {
-      return readDeck(root, dir);
+      return readDeck({
+        root,
+        dir,
+      });
     }),
   );
 
@@ -42,7 +45,15 @@ export async function findDecks({
     });
 }
 
-async function readDeck(root: string, dir: string): Promise<IDeck | null> {
+interface IReadDeckParams {
+  root: string;
+  dir: string;
+}
+
+export async function readDeck({
+  root,
+  dir,
+}: IReadDeckParams): Promise<IDeck | null> {
   const entry = join(dir, entryFileName);
 
   if (!(await isFile(entry))) {
@@ -57,7 +68,7 @@ async function readDeck(root: string, dir: string): Promise<IDeck | null> {
   const cover = await resolveCover(dir, headmatter.background);
 
   return {
-    id: relative(root, dir).split(sep).join('/'),
+    id: relative(root, dir).split(sep).join('/') || '.',
     name: title || basename(dir),
     dir,
     entry,

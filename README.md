@@ -2,16 +2,16 @@
 
 Slidevision is a monorepo for [Slidev](https://sli.dev) decks, with a planned desktop app that presents them like Keynote: the presenter view stays on your screen and the slides go fullscreen on the projector.
 
-The project is at an early stage. It has one package so far:
+The project is at an early stage. It has:
 
 - [`@slidevision/workspace`](packages/workspace): the `slidevision` command, which lists a repository's decks on a local landing page and opens them on demand.
-
-The desktop app is not added yet.
+- [`workspaces/slidevision`](workspaces/slidevision): the desktop app, built with Tauri. It opens a project folder and lists its decks; presenting on two screens is in progress.
 
 ## Requirements
 
 - Node.js 22.22 or later
 - pnpm (the version in `package.json` is downloaded automatically)
+- Rust (stable, through [rustup](https://rustup.rs)) and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for the desktop app
 
 ## Getting started
 
@@ -19,11 +19,12 @@ The desktop app is not added yet.
 pnpm install
 ```
 
-Workspace packages go under `packages/`.
+Libraries go under `packages/` and apps under `workspaces/`.
 
 | Command | What it does |
 |---|---|
 | `pnpm build` | Builds every workspace package with Turbo |
+| `pnpm desktop` | Runs the desktop app in development mode |
 | `pnpm test` | Runs every workspace package's tests with Turbo (run `pnpm exec playwright install chromium` once first) |
 | `pnpm exec biome check .` | Checks linting and formatting |
 | `pnpm clear` | Removes `node_modules`, build output and Turbo caches |
