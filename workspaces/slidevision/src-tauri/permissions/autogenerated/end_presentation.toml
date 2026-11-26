@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-end-presentation"
+description = "Enables the end_presentation command without any pre-configured scope."
+commands.allow = ["end_presentation"]
+
+[[permission]]
+identifier = "deny-end-presentation"
+description = "Denies the end_presentation command without any pre-configured scope."
+commands.deny = ["end_presentation"]

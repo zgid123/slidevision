@@ -1,4 +1,5 @@
 import { deckStatus, type IDeckRun } from '@contracts/project';
+import { emit } from '@tauri-apps/api/event';
 import { clearMocks, mockIPC } from '@tauri-apps/api/mocks';
 import { flushPromises, mount } from '@vue/test-utils';
 
@@ -9,18 +10,34 @@ import { deckFactory } from '../../../factories/DeckFactory';
 describe('#DeckScreen', () => {
   let run: IDeckRun;
   let startedDecks: string[];
+  let plays: unknown[];
+  let playFailure: string | null;
 
   beforeEach(() => {
     startedDecks = [];
+    plays = [];
+    playFailure = null;
     mockIPC(
       (command, args) => {
-        if (command !== 'start_deck') {
-          throw new Error(`Unexpected command ${command}`);
+        switch (command) {
+          case 'start_deck': {
+            startedDecks.push((args as { id: string }).id);
+
+            return run;
+          }
+          case 'play': {
+            if (playFailure) {
+              throw playFailure;
+            }
+
+            plays.push(args);
+
+            return null;
+          }
+          default: {
+            throw new Error(`Unexpected command ${command}`);
+          }
         }
-
-        startedDecks.push((args as { id: string }).id);
-
-        return run;
       },
       {
         shouldMockEvents: true,
@@ -82,6 +99,21 @@ describe('#DeckScreen', () => {
 
       expect(overview.classes()).not.toContain('invisible');
       expect(wrapper.find('[role="status"]').exists()).toBe(false);
+    });
+
+    it('pauses the overview while a presentation runs', async () => {
+      const { wrapper } = mountScreen();
+
+      await flushPromises();
+      await emit('presentation-changed', true);
+      await flushPromises();
+
+      expect(wrapper.find('iframe').exists()).toBe(false);
+
+      await emit('presentation-changed', false);
+      await flushPromises();
+
+      expect(wrapper.find('iframe').exists()).toBe(true);
     });
 
     it('selects the slide the overview reports', async () => {
@@ -154,13 +186,73 @@ describe('#DeckScreen', () => {
     });
   });
 
-  it('shows the deck name and a Play button that is not available yet', () => {
+  it('shows the deck name', () => {
     const { deck, wrapper } = mountScreen();
-    const play = wrapper.findAll('button').find((button) => {
-      return button.text().includes('Play');
-    });
 
     expect(wrapper.get('h2').text()).toBe(deck.name);
-    expect(play?.attributes('disabled')).toBeDefined();
+  });
+
+  describe('Play', () => {
+    const playButton = (wrapper: ReturnType<typeof mountScreen>['wrapper']) => {
+      const button = wrapper.findAll('button').find((candidate) => {
+        return candidate.text().includes('Play');
+      });
+
+      if (!button) {
+        throw new Error('No Play button');
+      }
+
+      return button;
+    };
+
+    suite('while Slidev starts', () => {
+      it('is not available', () => {
+        const { wrapper } = mountScreen();
+
+        expect(playButton(wrapper).attributes('disabled')).toBeDefined();
+      });
+    });
+
+    suite('when the slides are shown', () => {
+      it('presents the deck from the selected slide', async () => {
+        const { wrapper } = mountScreen();
+
+        await flushPromises();
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://localhost:3030',
+            data: {
+              source: 'slidevision',
+              type: 'select',
+              no: 3,
+            },
+          }),
+        );
+        await playButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(plays).toEqual([
+          {
+            url: 'http://localhost:3030/',
+            slide: 3,
+          },
+        ]);
+      });
+    });
+
+    suite('when the presentation cannot open', () => {
+      it('shows why', async () => {
+        const { wrapper } = mountScreen();
+
+        playFailure = 'No display was found to present on.';
+        await flushPromises();
+        await playButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('[role="alert"]').text()).toBe(
+          'No display was found to present on.',
+        );
+      });
+    });
   });
 });

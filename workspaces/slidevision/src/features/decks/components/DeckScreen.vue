@@ -2,6 +2,8 @@
 import type { IDeck } from '@contracts/project';
 import { onMounted, onUnmounted, ref } from 'vue';
 
+import { presentationApi } from '#/features/presentation/api';
+
 import { decksApi } from '../api';
 import { slidesState, useDeckSlides } from '../hooks/useDeckSlides';
 import { overviewSrc, readSelectedSlide } from '../utils/overview';
@@ -22,6 +24,10 @@ const deckSlides = useDeckSlides({
   deck: props.deck,
 });
 const isOverviewLoaded = ref(false);
+const playError = ref<string | null>(null);
+const isPresenting = ref(false);
+let stopWatchingPresentation: (() => void) | undefined;
+let isUnmounted = false;
 
 const onMessage = (event: MessageEvent): void => {
   const { view } = deckSlides;
@@ -42,18 +48,54 @@ const onMessage = (event: MessageEvent): void => {
   }
 };
 
+const play = async (): Promise<void> => {
+  const { view } = deckSlides;
+
+  if (view.state !== slidesState.ready) {
+    return;
+  }
+
+  playError.value = null;
+
+  try {
+    await presentationApi.play({
+      url: view.url,
+      slide: view.selected,
+    });
+  } catch (error) {
+    playError.value = error instanceof Error ? error.message : String(error);
+  }
+};
+
 const retry = (): void => {
   isOverviewLoaded.value = false;
   void deckSlides.start();
 };
 
-onMounted(() => {
+const onPresentationChanged = (presenting: boolean): void => {
+  isPresenting.value = presenting;
+
+  if (presenting) {
+    isOverviewLoaded.value = false;
+  }
+};
+
+onMounted(async () => {
   window.addEventListener('message', onMessage);
   void deckSlides.start();
+  stopWatchingPresentation = await presentationApi.onPresentationChanged(
+    onPresentationChanged,
+  );
+
+  if (isUnmounted) {
+    stopWatchingPresentation();
+  }
 });
 
 onUnmounted(() => {
+  isUnmounted = true;
   window.removeEventListener('message', onMessage);
+  stopWatchingPresentation?.();
   deckSlides.stop();
 });
 </script>
@@ -74,13 +116,20 @@ onUnmounted(() => {
       </h2>
       <button
         type="button"
-        class="shrink-0 rounded-md bg-foreground-primary px-4 py-1.5 text-sm font-medium text-primary disabled:opacity-40"
-        title="Playing on your displays comes in the next update."
-        disabled
+        class="shrink-0 rounded-md bg-foreground-primary px-4 py-1.5 text-sm font-medium text-primary hover:bg-foreground-secondary disabled:opacity-40"
+        :disabled="deckSlides.view.state !== slidesState.ready"
+        @click="play"
       >
         ▶ Play
       </button>
     </div>
+    <p
+      v-if="playError"
+      role="alert"
+      class="mt-0 mb-4 shrink-0 text-sm text-foreground-secondary"
+    >
+      {{ playError }}
+    </p>
     <div class="relative min-h-0 flex-1">
       <DeckFailure
         v-if="deckSlides.view.state === slidesState.failed"
@@ -95,7 +144,7 @@ onUnmounted(() => {
           class="absolute inset-0 overflow-hidden"
         />
         <iframe
-          v-if="deckSlides.view.state === slidesState.ready"
+          v-if="deckSlides.view.state === slidesState.ready && !isPresenting"
           :src="overviewSrc({ url: deckSlides.view.url })"
           :title="`Slides of ${deck.name}`"
           :data-selected-slide="deckSlides.view.selected"

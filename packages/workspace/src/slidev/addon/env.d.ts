@@ -1,3 +1,11 @@
+declare module '@slidev/client/composables/useDrawings.ts' {
+  import type { Ref } from 'vue';
+
+  export function useDrawings(): {
+    drawingEnabled: Ref<boolean>;
+  };
+}
+
 declare module '@slidev/client/composables/useClicks.ts' {
   import type { ClicksContext, SlideRoute } from '@slidev/types';
 
@@ -49,4 +57,12 @@ declare module '@slidev/client/internals/SlideWrapper.vue' {
   }>;
 
   export default component;
+}
+
+declare module '@slidev/client/state/storage.ts' {
+  import type { ComputedRef, Ref } from 'vue';
+
+  export const isInputting: ComputedRef<boolean>;
+  export const showGotoDialog: Ref<boolean>;
+  export const showOverview: Ref<boolean>;
 }

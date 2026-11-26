@@ -5,7 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'packages/workspace/**'
+      - 'packages/**'
+      - 'workspaces/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/test.yml'
 
 jobs:
@@ -28,3 +32,34 @@ jobs:
 
       - name: Run affected tests
         run: pnpm turbo run test --filter="...[origin/${{ github.base_ref }}]"
+
+  desktop:
+    name: Run desktop tests (${{ matrix.os }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare Node.JS and pnpm
+        uses: zgid123/alpha-dx/gh-actions/preparation/nodejs@main
+
+      - name: Prepare Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build the desktop app's web files
+        run: pnpm turbo run build --filter=@slidevision/desktop
+
+      - name: Run Rust tests
+        run: cargo test --workspace
