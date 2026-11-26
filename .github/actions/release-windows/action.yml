@@ -1,0 +1,109 @@
+name: Release Windows
+
+description: Build and sign the Windows NSIS installer, attach it to the release, and publish updates to R2
+
+inputs:
+  tag:
+    description: Release tag (empty builds without releasing)
+    required: false
+    default: ''
+  github-token:
+    description: Token that can upload release files
+    required: true
+  tauri-signing-private-key:
+    description: Private key that signs Tauri updater bundles
+    required: false
+    default: ''
+  tauri-signing-private-key-password:
+    description: Password for the Tauri signing private key
+    required: false
+    default: ''
+  cloudflare-api-token:
+    description: Token for the release bucket
+    required: false
+    default: ''
+  cloudflare-account-id:
+    description: Cloudflare account ID for the release bucket
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare Node.js and pnpm
+      uses: zgid123/alpha-dx/gh-actions/preparation/nodejs@main
+
+    - name: Prepare Rust
+      uses: zgid123/alpha-dx/gh-actions/preparation/rust@main
+      with:
+        toolchain: stable
+        targets: x86_64-pc-windows-msvc
+        cache-key: release-windows
+
+    - name: Build workspace host
+      shell: bash
+      run: pnpm turbo run build --filter=@slidevision/workspace
+
+    - name: Build Windows installer
+      shell: bash
+      env:
+        TAG: ${{ inputs.tag }}
+        TAURI_SIGNING_PRIVATE_KEY: ${{ inputs.tauri-signing-private-key }}
+        TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ inputs.tauri-signing-private-key-password }}
+      run: |
+        set -euo pipefail
+
+        if [ -n "$TAG" ] && [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+          echo "::error::A release needs the TAURI_SIGNING_PRIVATE_KEY secret, or the updater cannot verify it."
+          exit 1
+        fi
+
+        version="${TAG##*@}"
+        if [ -z "$version" ]; then
+          version=$(node -p "require('./workspaces/slidevision/package.json').version")
+        fi
+
+        pnpm --filter @slidevision/desktop tauri build --target x86_64-pc-windows-msvc --bundles nsis
+
+        target_root="${CARGO_TARGET_DIR:-target}"
+        bundle_dir="$target_root/x86_64-pc-windows-msvc/release/bundle"
+        installer=$(find "$bundle_dir/nsis" -maxdepth 1 -name '*-setup.exe' ! -name '*.sig' | head -n 1)
+
+        if [ -z "$installer" ]; then
+          echo "::error::Missing Windows installer in $bundle_dir/nsis."
+          exit 1
+        fi
+
+        out="$RUNNER_TEMP/windows"
+        mkdir -p "$out"
+        cp "$installer" "$out/Slidevision-windows-x86_64-setup.exe"
+        cp "$installer" "$out/Slidevision-$version-windows-x86_64-setup.exe"
+
+        if [ -f "$installer.sig" ]; then
+          cp "$installer.sig" "$out/Slidevision-windows-x86_64-setup.exe.sig"
+        elif [ -n "$TAG" ]; then
+          echo "::error::Missing updater signature $installer.sig."
+          exit 1
+        fi
+
+    - name: Attach installer to GitHub release
+      if: inputs.tag != ''
+      shell: bash
+      env:
+        TAG: ${{ inputs.tag }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        version="${TAG##*@}"
+        gh release upload "$TAG" \
+          "$RUNNER_TEMP/windows/Slidevision-$version-windows-x86_64-setup.exe" \
+          --clobber
+
+    - name: Publish update
+      if: inputs.tag != ''
+      uses: ./.github/actions/publish-update
+      with:
+        tag: ${{ inputs.tag }}
+        platform: windows
+        files: x86_64=${{ runner.temp }}/windows/Slidevision-windows-x86_64-setup.exe
+        cloudflare-api-token: ${{ inputs.cloudflare-api-token }}
+        cloudflare-account-id: ${{ inputs.cloudflare-account-id }}

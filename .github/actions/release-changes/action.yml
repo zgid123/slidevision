@@ -1,0 +1,71 @@
+name: Release Changes
+
+description: Create or publish a Changesets release PR on push, or resolve a manually dispatched tag
+
+inputs:
+  tag:
+    description: Release tag to publish again on workflow_dispatch (empty builds without releasing)
+    required: false
+    default: ''
+  github-token:
+    description: Token for creating Release PRs and GitHub releases
+    required: true
+
+outputs:
+  app-tag:
+    description: Published or re-published desktop app tag
+    value: ${{ steps.tags.outputs.app-tag || steps.again.outputs.app-tag }}
+  server-tag:
+    description: Published or re-published update server tag
+    value: ${{ steps.tags.outputs.server-tag || steps.again.outputs.server-tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare Node.js and pnpm
+      if: github.event_name == 'push'
+      uses: zgid123/alpha-dx/gh-actions/preparation/nodejs@main
+
+    - name: Disable GPG
+      if: github.event_name == 'push'
+      shell: bash
+      run: git config --global commit.gpgsign false
+
+    - name: Create Release PR or Publish
+      id: changesets
+      if: github.event_name == 'push'
+      uses: changesets/action@v2
+      with:
+        version-script: pnpm version-packages
+        publish-script: pnpm release
+        create-github-releases: true
+        github-token: ${{ inputs.github-token }}
+
+    - name: Released tags
+      id: tags
+      if: steps.changesets.outputs.published == 'true'
+      shell: bash
+      env:
+        PACKAGES: ${{ steps.changesets.outputs.published-packages }}
+      run: |
+        tag() { jq -r --arg name "$1" '.[] | select(.name == $name and .version != "0.0.0") | "\(.name)@\(.version)"' <<< "$PACKAGES"; }
+        echo "app-tag=$(tag '@slidevision/desktop')" >> "$GITHUB_OUTPUT"
+        echo "server-tag=$(tag '@slidevision/server')" >> "$GITHUB_OUTPUT"
+
+    - name: Tag to publish again
+      id: again
+      if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
+      shell: bash
+      env:
+        TAG: ${{ inputs.tag }}
+      run: |
+        if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+          echo "::error::There is no tag $TAG."
+          exit 1
+        fi
+
+        case "$TAG" in
+          @slidevision/desktop@*) echo "app-tag=$TAG" >> "$GITHUB_OUTPUT" ;;
+          @slidevision/server@*) echo "server-tag=$TAG" >> "$GITHUB_OUTPUT" ;;
+          *) echo "::error::$TAG is not a @slidevision/desktop or @slidevision/server tag."; exit 1 ;;
+        esac

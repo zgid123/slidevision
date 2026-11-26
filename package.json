@@ -10,6 +10,7 @@
     "clear": "pnpm -r exec rimraf node_modules dist .turbo lib && pnpm rimraf node_modules .turbo",
     "build": "turbo run build",
     "test": "turbo run test",
+    "version-packages": "changeset version && node scripts/sync-version.ts",
     "release": "pnpm build && changeset publish",
     "set-release": "changeset",
     "tf-bootstrap": "make -C infrastructures/terraform bootstrap",

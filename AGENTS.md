@@ -15,7 +15,7 @@ Slidevision is a pnpm and Turbo monorepo. It will hold Slidev decks and a deskto
 
 - `.agents/skills/`: project skills, installed from `zgid123/skills` and pinned in `skills-lock.json`. `.claude/skills/` links to the same folders.
 - `biome.json`, `tsconfig.json`, `lefthook.yml`: lint, type-check and pre-commit settings, extending `@alphacifer/biome` and `@alphacifer/tsconfig`.
-- `.changeset/`, `.github/workflows/release.yml`: Changesets configuration and the release workflow, which uses the shared Node.js and pnpm setup action from `zgid123/alpha-dx`.
+- `.changeset/`, `.github/workflows/release.yml`, `.github/actions/`, `scripts/`: Changesets configuration (versioning and tagging private `@slidevision/server` and `@slidevision/desktop` while ignoring `@contracts/project`), typed release scripts (`sync-version.ts`, `publish-update.ts`, `obsolete-files.ts`) run natively on Node 24, composite GitHub Actions, and the release workflow using `zgid123/alpha-dx` actions to deploy `@slidevision/server` to Cloudflare Workers and build/sign `@slidevision/desktop` for macOS (`aarch64`, `x86_64`) and Windows (`x86_64`), uploading updater bundles/manifests to Cloudflare R2 (cleaning obsolete prior versions) and installers to GitHub Releases.
 - `.github/workflows/test.yml`: runs the tests of packages affected by a pull request, using the same setup action and Playwright's Chromium, and on macOS and Windows builds the desktop app's web files, which the Tauri crate needs to compile, then runs `cargo test --workspace`.
 - `turbo.json`: `build` (outputs `dist/**` and `lib/**`), `test`, and `dev` tasks.
 

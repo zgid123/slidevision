@@ -1,0 +1,83 @@
+name: Publish update
+
+description: Verify Tauri signatures, write the platform manifest, clean up obsolete R2 files, and upload to R2
+
+inputs:
+  tag:
+    description: The release tag, for example @slidevision/desktop@0.1.0
+    required: true
+  platform:
+    description: darwin or windows
+    required: true
+  files:
+    description: One line per build, <arch>=<path> of the signed updater file (with an adjacent .sig file)
+    required: true
+  installers:
+    description: One line per build, <arch>=<path> of an installer to upload next to its update file for first installs (macOS DMGs). Empty uploads none.
+    required: false
+    default: ''
+  cloudflare-api-token:
+    description: Token that can write to the release bucket. Without it the upload is skipped.
+    required: false
+    default: ''
+  cloudflare-account-id:
+    description: Cloudflare account of the release bucket
+    required: false
+    default: ''
+  bucket:
+    description: R2 bucket for release files and manifests
+    required: false
+    default: slidevision
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare Node.js and pnpm
+      uses: zgid123/alpha-dx/gh-actions/preparation/nodejs@main
+
+    - name: Write manifest and upload list
+      shell: bash
+      env:
+        TAG: ${{ inputs.tag }}
+        PLATFORM: ${{ inputs.platform }}
+        FILES: ${{ inputs.files }}
+        INSTALLERS: ${{ inputs.installers }}
+      run: |
+        set --
+        while read -r line; do
+          if [ -n "$line" ]; then set -- "$@" --file "$line"; fi
+        done <<< "$FILES"
+        while read -r line; do
+          if [ -n "$line" ]; then set -- "$@" --installer "$line"; fi
+        done <<< "$INSTALLERS"
+        node scripts/publish-update.ts --platform "$PLATFORM" \
+          --version "${TAG##*@}" "$@" --out "$RUNNER_TEMP/update"
+
+    - name: Find obsolete files
+      if: inputs.cloudflare-api-token != ''
+      shell: bash
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+        PLATFORM: ${{ inputs.platform }}
+        BUCKET: ${{ inputs.bucket }}
+      run: |
+        previous="$RUNNER_TEMP/update/previous.json"
+        pnpm --filter @slidevision/server exec wrangler r2 object get "$BUCKET/manifests/$PLATFORM.json" \
+          --file "$previous" --remote > /dev/null 2>&1 || rm -f "$previous"
+
+        current_key=$(head -n 1 "$RUNNER_TEMP/update/uploads" | cut -f 1)
+        # Only lines shaped like release keys, never anything else pnpm prints.
+        node scripts/obsolete-files.ts --previous "$previous" --current-key "$current_key" \
+          | grep -E "^$PLATFORM/[^/]+/[^/]+$" > "$RUNNER_TEMP/update/obsolete" || true
+
+    - name: Upload to R2
+      uses: zgid123/alpha-dx/gh-actions/upload/r2@main
+      with:
+        bucket: ${{ inputs.bucket }}
+        wrangler-filter: '@slidevision/server'
+        cloudflare-api-token: ${{ inputs.cloudflare-api-token }}
+        cloudflare-account-id: ${{ inputs.cloudflare-account-id }}
+        uploads-file: ${{ runner.temp }}/update/uploads
+        files: manifests/${{ inputs.platform }}.json=${{ runner.temp }}/update/${{ inputs.platform }}.json
+        delete-file: ${{ runner.temp }}/update/obsolete
