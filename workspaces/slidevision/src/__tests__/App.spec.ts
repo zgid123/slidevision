@@ -6,6 +6,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import App from '#/App.vue';
 import { openFolderRequestedEvent } from '#/features/projects/api';
 import type { IRecentProject } from '#/features/projects/interface';
+import { checkForUpdatesRequestedEvent } from '#/features/updates/api';
 
 import { deckFactory } from './factories/DeckFactory';
 import { recentProjectFactory } from './factories/RecentProjectFactory';
@@ -15,6 +16,14 @@ describe('#App', () => {
   let recent: IRecentProject[];
   let pickedFolder: string | null;
   let openGate: Promise<void> | null;
+  let pendingUpdate: {
+    rid: number;
+    currentVersion: string;
+    version: string;
+    body?: string;
+    rawJson: Record<string, unknown>;
+  } | null;
+  let relaunched: boolean;
   let wrapper: VueWrapper;
 
   const buttonNamed = (name: string) => {
@@ -40,6 +49,8 @@ describe('#App', () => {
     recent = [];
     pickedFolder = null;
     openGate = null;
+    pendingUpdate = null;
+    relaunched = false;
     mockConvertFileSrc('macos');
     mockIPC(
       async (command, args) => {
@@ -72,6 +83,46 @@ describe('#App', () => {
           }
           case 'plugin:dialog|open': {
             return pickedFolder;
+          }
+          case 'plugin:updater|check': {
+            return pendingUpdate;
+          }
+          case 'plugin:updater|download_and_install': {
+            const channel = (
+              args as
+                | {
+                    onEvent?: {
+                      onmessage?: (event: unknown) => void;
+                    };
+                  }
+                | undefined
+            )?.onEvent;
+
+            channel?.onmessage?.({
+              event: 'Started',
+              data: {
+                contentLength: 100,
+              },
+            });
+            channel?.onmessage?.({
+              event: 'Progress',
+              data: {
+                chunkLength: 100,
+              },
+            });
+            channel?.onmessage?.({
+              event: 'Finished',
+            });
+
+            return null;
+          }
+          case 'plugin:resources|close': {
+            return null;
+          }
+          case 'plugin:process|restart': {
+            relaunched = true;
+
+            return null;
           }
           default: {
             throw new Error(`Unexpected command ${command}`);
@@ -212,6 +263,44 @@ describe('#App', () => {
       await flushPromises();
 
       expect(wrapper.text()).toContain('Open Folder…');
+    });
+  });
+
+  suite('when an update is available on startup', () => {
+    it('offers to install it and restarts when Update is clicked', async () => {
+      pendingUpdate = {
+        rid: 1,
+        currentVersion: '0.0.0',
+        version: '0.2.0',
+        body: 'Presenter improvements',
+        rawJson: {},
+      };
+
+      await mountApp();
+
+      expect(wrapper.text()).toContain('Slidevision 0.2.0 is available');
+      expect(wrapper.text()).toContain('Presenter improvements');
+
+      await buttonNamed('Update').trigger('click');
+      await flushPromises();
+
+      expect(relaunched).toBe(true);
+    });
+  });
+
+  suite('when Check for Updates… is triggered from the menu', () => {
+    it('shows the up-to-date notice and dismisses it', async () => {
+      await mountApp();
+      await emit(checkForUpdatesRequestedEvent);
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('Slidevision is up to date');
+
+      await wrapper
+        .get('[aria-label="Dismiss update notification"]')
+        .trigger('click');
+
+      expect(wrapper.text()).not.toContain('Slidevision is up to date');
     });
   });
 });

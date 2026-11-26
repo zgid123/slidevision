@@ -31,6 +31,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": [
       "app",
       "dmg",
@@ -46,6 +47,14 @@
     "resources": {
       "../lib/host.mjs": "lib/host.mjs",
       "../lib/slidev/": "lib/slidev/"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDcyOTFEQUE3MEQ2MDk5NTEKUldSUm1XQU5wOXFSY2pxWUd1TXhGdjhTa3J1SC9jVDd1dStpeTYweVp0a2F4aVUyVG9nS1QwNEcK",
+      "endpoints": [
+        "https://slidevision-server.tachyon.cyou/v1/updates/{{target}}/{{arch}}/{{current_version}}"
+      ]
     }
   }
 }

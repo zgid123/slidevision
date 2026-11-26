@@ -7,6 +7,9 @@ import DeckScreen from '#/features/decks/components/DeckScreen.vue';
 import WelcomeScreen from '#/features/projects/components/WelcomeScreen.vue';
 import ThemeSwitch from '#/features/window/components/ThemeSwitch.vue';
 import WindowControls from '#/features/window/components/WindowControls.vue';
+import UpdateBanner from '#/features/updates/components/UpdateBanner.vue';
+import { updatesApi } from '#/features/updates/api';
+import { useAppUpdate } from '#/features/updates/hooks/useAppUpdate';
 import { projectKind } from '@contracts/project';
 import { projectsApi } from '#/features/projects/api';
 import {
@@ -25,7 +28,12 @@ const theme = useTheme({
   storage: localStorage,
 });
 
+const update = useAppUpdate({
+  api: updatesApi,
+});
+
 let stopListening: (() => void) | undefined;
+let stopListeningForUpdates: (() => void) | undefined;
 
 const project = computed(() => {
   const { screen } = session;
@@ -49,8 +57,12 @@ const projectName = computed(() => {
 
 onMounted(async () => {
   void theme.restore();
+  void update.checkInBackground();
   stopListening = await projectsApi.onOpenFolderRequested(() => {
     void session.openFolder();
+  });
+  stopListeningForUpdates = await updatesApi.onCheckRequested(() => {
+    void update.check();
   });
 
   await session.load();
@@ -58,6 +70,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopListening?.();
+  stopListeningForUpdates?.();
 });
 </script>
 
@@ -141,5 +154,11 @@ onUnmounted(() => {
         />
       </div>
     </div>
+    <UpdateBanner
+      :state="update.state"
+      @install="update.install()"
+      @retry="update.check()"
+      @dismiss="update.dismiss()"
+    />
   </main>
 </template>
