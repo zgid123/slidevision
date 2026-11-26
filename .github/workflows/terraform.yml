@@ -1,0 +1,64 @@
+name: Terraform
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infrastructures/terraform/cloudflare/**'
+      - '.github/actions/terraform/**'
+      - '.github/workflows/terraform.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructures/terraform/cloudflare/**'
+      - '.github/actions/terraform/**'
+      - '.github/workflows/terraform.yml'
+
+permissions:
+  contents: read
+
+# One run at a time, so a plan never reads the state while an apply writes it.
+concurrency:
+  group: terraform
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan
+    if: github.event_name == 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Plan changes
+        uses: ./.github/actions/terraform
+        with:
+          command: plan
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  apply:
+    name: Apply
+    if: github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Apply changes
+        uses: ./.github/actions/terraform
+        with:
+          command: apply
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

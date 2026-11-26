@@ -1,0 +1,50 @@
+name: Terraform
+
+description: Plan or apply the Cloudflare infrastructure in infrastructures/terraform/cloudflare, with its state in the slidevision-terraform R2 bucket
+
+inputs:
+  command:
+    description: plan (show the changes) or apply (make them)
+    required: true
+  cloudflare-api-token:
+    description: Token that can edit R2 buckets and Workers
+    required: true
+  cloudflare-account-id:
+    description: Cloudflare account that holds the resources
+    required: true
+  r2-access-key-id:
+    description: R2 access key for the slidevision-terraform bucket
+    required: true
+  r2-secret-access-key:
+    description: R2 secret key for the slidevision-terraform bucket
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.17.1
+        terraform_wrapper: false
+
+    - name: Run Terraform
+      shell: bash
+      working-directory: infrastructures/terraform/cloudflare
+      env:
+        COMMAND: ${{ inputs.command }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        TF_VAR_cf_account_id: ${{ inputs.cloudflare-account-id }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.r2-access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.r2-secret-access-key }}
+        AWS_ENDPOINT_URL_S3: https://${{ inputs.cloudflare-account-id }}.r2.cloudflarestorage.com
+      run: |
+        terraform fmt -check
+        terraform init -input=false
+        terraform validate
+
+        case "$COMMAND" in
+          plan) terraform plan -input=false ;;
+          apply) terraform apply -input=false -auto-approve ;;
+          *) echo "::error::command must be plan or apply, not '$COMMAND'"; exit 1 ;;
+        esac

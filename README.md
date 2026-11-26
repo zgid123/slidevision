@@ -39,6 +39,10 @@ Packages are published to npm with [Changesets](https://github.com/changesets/ch
 2. After the pull request is merged, the **Release packages** workflow opens a "Version Packages" pull request that bumps versions and updates changelogs.
 3. Merging that pull request runs the workflow again, which builds and publishes the new versions and creates GitHub releases.
 
+## Infrastructure
+
+Cloudflare resources live under [infrastructures/terraform](infrastructures/terraform). The `slidevision-terraform` state bucket is bootstrapped once locally (`pnpm tf-bootstrap`), and changes to `infrastructures/terraform/cloudflare` are planned on pull requests and applied on push to `main` by the **Terraform** workflow (`.github/workflows/terraform.yml`), which also requires `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` secrets (an R2 API token with Object Read & Write on `slidevision-terraform`).
+
 ## License
 
 Slidevision is licensed under the [MIT License](LICENSE).

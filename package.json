@@ -12,6 +12,7 @@
     "test": "turbo run test",
     "release": "pnpm build && changeset publish",
     "set-release": "changeset",
+    "tf-bootstrap": "make -C infrastructures/terraform bootstrap",
     "desktop": "turbo run build --filter=@slidevision/workspace && pnpm --filter @slidevision/desktop tauri dev"
   },
   "keywords": [
