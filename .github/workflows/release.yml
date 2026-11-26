@@ -1,11 +1,20 @@
-name: Release packages
+name: Release
 
 on:
   push:
-    paths:
-      - '.changeset/*.md'
     branches:
       - main
+    paths:
+      - '.changeset/*.md'
+  # By hand: without a tag, build the desktop app for both platforms without
+  # releasing. With a tag (@slidevision/desktop@X.Y.Z or @slidevision/server@X.Y.Z),
+  # publish that release again: its code from the tag, the release steps from this branch.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish again (empty builds the desktop app without releasing)
+        required: false
+        default: ''
 
 permissions:
   id-token: write
@@ -13,24 +22,153 @@ permissions:
   pull-requests: write
 
 jobs:
-  release:
-    name: Release Changes
-
+  changes:
+    name: Detect changes
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Prepare Node.JS and pnpm
-        uses: zgid123/alpha-dx/gh-actions/preparation/nodejs@main
-
-      - name: Disable GPG
-        run: git config --global commit.gpgsign false
-
-      - name: Create Release PR or Publish
-        uses: changesets/action@v2
         with:
-          publish-script: pnpm release
-          create-github-releases: true
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: filter
+        uses: zgid123/alpha-dx/gh-actions/detect-changes@main
+        with:
+          filters: |
+            changeset = ^\.changeset/.*\.md$
+
+  release:
+    name: Release Changes
+    needs: changes
+    if: >-
+      !cancelled() &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'push' &&
+          needs.changes.result == 'success' &&
+          fromJSON(needs.changes.outputs.changes).changeset
+        )
+      )
+    runs-on: ubuntu-latest
+
+    outputs:
+      app-tag: ${{ steps.release.outputs.app-tag }}
+      server-tag: ${{ steps.release.outputs.server-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Release changes
+        id: release
+        uses: ./.github/actions/release-changes
+        with:
+          tag: ${{ inputs.tag || '' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  release-macos:
+    name: Release macOS
+    needs: release
+    if: >-
+      !cancelled() &&
+      needs.release.result == 'success' &&
+      (needs.release.outputs.app-tag != '' || (github.event_name == 'workflow_dispatch' && inputs.tag == ''))
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release.outputs.app-tag || github.ref }}
+
+      # Publishing a tag again: keep the tag's code, but use the release
+      # steps of this run, which may hold fixes made after the tag.
+      - name: Use this run's release steps
+        if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
+        run: |
+          git fetch --depth=1 origin ${{ github.sha }}
+          git checkout FETCH_HEAD -- .github/actions scripts
+
+      - name: Build and release macOS
+        uses: ./.github/actions/release-macos
+        with:
+          tag: ${{ needs.release.outputs.app-tag }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          certificate: ${{ secrets.MACOS_CERTIFICATE }}
+          certificate-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          tauri-signing-private-key: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          tauri-signing-private-key-password: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  release-windows:
+    name: Release Windows
+    needs: release
+    if: >-
+      !cancelled() &&
+      needs.release.result == 'success' &&
+      (needs.release.outputs.app-tag != '' || (github.event_name == 'workflow_dispatch' && inputs.tag == ''))
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release.outputs.app-tag || github.ref }}
+
+      # Publishing a tag again: keep the tag's code, but use the release
+      # steps of this run, which may hold fixes made after the tag.
+      - name: Use this run's release steps
+        if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
+        run: |
+          git fetch --depth=1 origin ${{ github.sha }}
+          git checkout FETCH_HEAD -- .github/actions scripts
+
+      - name: Build and release Windows
+        uses: ./.github/actions/release-windows
+        with:
+          tag: ${{ needs.release.outputs.app-tag }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          tauri-signing-private-key: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          tauri-signing-private-key-password: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  release-server:
+    name: Release Server
+    needs: release
+    if: >-
+      !cancelled() &&
+      needs.release.result == 'success' &&
+      needs.release.outputs.server-tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release.outputs.server-tag }}
+
+      - name: Deploy server
+        uses: zgid123/alpha-dx/gh-actions/deployment/cloudflare-workers-node@main
+        with:
+          filter: '@slidevision/server'
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

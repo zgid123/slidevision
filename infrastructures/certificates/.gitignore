@@ -1,0 +1,7 @@
+# Keys, certificates and passwords made from these settings never go into git.
+*.pem
+*.p12
+*.pass
+
+# Temporary curve file the Makefile deletes.
+*.param
