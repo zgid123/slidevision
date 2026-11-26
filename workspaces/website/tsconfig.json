@@ -1,0 +1,14 @@
+{
+  "extends": "@alphacifer/tsconfig/base",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [
+      "node",
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    ".vitepress/**/*.ts",
+    "vitest.config.ts"
+  ]
+}

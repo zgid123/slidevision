@@ -6,6 +6,7 @@ The project is at an early stage. It has:
 
 - [`@slidevision/workspace`](packages/workspace): the `slidevision` command, which lists a repository's decks on a local landing page and opens them on demand.
 - [`workspaces/slidevision`](workspaces/slidevision): the desktop app, built with Tauri. It opens a project folder and lists its decks; presenting on two screens is in progress.
+- [`workspaces/website`](workspaces/website): the documentation and download site, published to [zgid123.github.io/slidevision](https://zgid123.github.io/slidevision/).
 
 ## Requirements
 

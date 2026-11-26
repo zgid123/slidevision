@@ -6,9 +6,13 @@
       "dependsOn": [
         "^build"
       ],
+      "env": [
+        "SLIDEVISION_RELEASES_DIR"
+      ],
       "outputs": [
         "dist/**",
-        "lib/**"
+        "lib/**",
+        ".vitepress/dist/**"
       ]
     },
     "dev": {

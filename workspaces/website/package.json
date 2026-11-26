@@ -1,0 +1,17 @@
+{
+  "name": "@slidevision/website",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Slidevision documentation and download page, published to GitHub Pages.",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4"
+  }
+}

@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - '.changeset/*.md'
+      - 'workspaces/website/**'
+      - '.github/actions/test-website/**'
   # By hand: without a tag, build the desktop app for both platforms without
   # releasing. With a tag (@slidevision/desktop@X.Y.Z or @slidevision/server@X.Y.Z),
   # publish that release again: its code from the tag, the release steps from this branch.
@@ -44,6 +46,7 @@ jobs:
         with:
           filters: |
             changeset = ^\.changeset/.*\.md$
+            website   = ^workspaces/website/|^\.github/actions/test-website/
 
   release:
     name: Release Changes
@@ -170,5 +173,62 @@ jobs:
         uses: zgid123/alpha-dx/gh-actions/deployment/cloudflare-workers-node@main
         with:
           filter: '@slidevision/server'
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  # Verify website tests before deploying on website pushes.
+  test-website:
+    name: Test Website
+    needs: changes
+    if: github.event_name != 'workflow_dispatch' && fromJSON(needs.changes.outputs.changes).website
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Test website
+        uses: ./.github/actions/test-website
+
+  # Rebuild the download and documentation site after a desktop release or a website push on main.
+  deploy-website:
+    name: Deploy Website
+    needs: [release, release-macos, release-windows, test-website]
+    if: >-
+      !cancelled() &&
+      (needs.test-website.result == 'success' || needs.test-website.result == 'skipped') &&
+      (
+        (github.event_name == 'push' && needs.test-website.result == 'success') ||
+        (needs.release.result == 'success' && needs.release.outputs.app-tag != '' && (needs.release-macos.result == 'success' || needs.release-windows.result == 'success'))
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pages: write
+      id-token: write
+
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    environment:
+      name: github-pages
+      url: ${{ steps.website.outputs.page-url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Deploy website
+        id: website
+        uses: zgid123/alpha-dx/gh-actions/deployment/app-landing-vitepress@main
+        with:
+          bucket: slidevision
+          platforms: darwin windows
+          releases-dir-env: SLIDEVISION_RELEASES_DIR
+          wrangler-filter: '@slidevision/server'
+          website-filter: '@slidevision/website'
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

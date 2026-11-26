@@ -1,0 +1,56 @@
+/* Slidevision's palette, taken from the app icon: midnight slate, cyan glow,
+   indigo slides and warm coral projection beams. */
+:root {
+  --sv-accent: #60a5fa;
+  --sv-accent-strong: #4f46e5;
+  --sv-accent-cyan: #38bdf8;
+  --sv-accent-text: #09101f;
+  --sv-accent-glow: rgba(56, 189, 248, 0.45);
+  --sv-indigo-glow: rgba(99, 102, 241, 0.28);
+  --sv-indigo-shadow: rgba(56, 189, 248, 0.35);
+  --sv-coral-glow: rgba(244, 114, 182, 0.14);
+  --sv-background: #0e1320;
+  --sv-surface: #161d31;
+  --sv-border: #263150;
+  --sv-heading: #f8fafc;
+  --sv-muted: #94a3b8;
+
+  --vp-c-brand-1: #7dd3fc;
+  --vp-c-brand-2: var(--sv-accent);
+  --vp-c-brand-3: var(--sv-accent-strong);
+  --vp-c-brand-soft: rgba(56, 189, 248, 0.16);
+
+  --vp-c-bg: var(--sv-background);
+  --vp-c-bg-alt: #0a0e18;
+  --vp-c-bg-elv: var(--sv-surface);
+  --vp-c-bg-soft: var(--sv-surface);
+  --vp-c-divider: var(--sv-border);
+  --vp-c-gutter: #080b13;
+  --vp-c-text-2: var(--sv-muted);
+
+  --vp-nav-bg-color: rgba(14, 19, 32, 0.82);
+  --vp-button-brand-text: var(--sv-accent-text);
+  --vp-button-brand-hover-text: var(--sv-accent-text);
+  --vp-button-brand-active-text: var(--sv-accent-text);
+
+  /* Dual-screen demo tokens */
+  --demo-frame: #13192b;
+  --demo-frame-border: #2b3759;
+  --demo-dot: #3a476e;
+  --demo-slide-bg: #0b101b;
+  --demo-slide-card: #1b243d;
+  --demo-slide-text: #f1f5f9;
+  --demo-slide-muted: #94a3b8;
+  --demo-notes-bg: #101626;
+  --demo-badge-bg: rgba(56, 189, 248, 0.15);
+  --demo-badge-text: #7dd3fc;
+  --demo-focus: #38bdf8;
+}
+
+/* The landing page draws its own full-width layout. */
+.landing-page .VPPage,
+.landing-page .VPContent .content-container,
+.landing-page .VPContent .content {
+  max-width: none;
+  padding: 0;
+}
