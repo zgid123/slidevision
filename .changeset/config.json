@@ -17,6 +17,7 @@
     "tag": true
   },
   "ignore": [
-    "@contracts/project"
+    "@contracts/project",
+    "@slidevision/website"
   ]
 }

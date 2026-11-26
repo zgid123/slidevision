@@ -1,0 +1,12 @@
+name: Test Website
+description: Run tests for the documentation and download website
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node & pnpm
+      uses: zgid123/alpha-dx/gh-actions/preparation/nodejs@main
+
+    - name: Run website tests
+      shell: bash
+      run: pnpm --filter @slidevision/website test
