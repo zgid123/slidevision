@@ -4,5 +4,6 @@ packages:
 allowBuilds:
   esbuild: false
   lefthook: true
+  workerd: false
 minimumReleaseAgeExclude:
   - '@alphacifer/lefthook@0.0.2'

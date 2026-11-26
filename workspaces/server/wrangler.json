@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "slidevision-server",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-25",
+  "observability": {
+    "enabled": true
+  },
+  "r2_buckets": [
+    {
+      "binding": "RELEASES",
+      "bucket_name": "slidevision"
+    }
+  ]
+}

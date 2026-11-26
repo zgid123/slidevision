@@ -1,0 +1,18 @@
+{
+  "extends": "@alphacifer/tsconfig/hono",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "#/*": [
+        "./src/*"
+      ]
+    },
+    "types": [
+      "vitest/globals",
+      "@cloudflare/workers-types"
+    ]
+  },
+  "include": [
+    "src"
+  ]
+}
