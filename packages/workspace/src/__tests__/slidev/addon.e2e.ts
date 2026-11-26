@@ -28,7 +28,7 @@ const slidesSource = [
   '',
 ].join('\n');
 
-describe('Slidevision overview page', () => {
+describe('Slidevision Slidev addon', () => {
   let workspace: ITestWorkspace;
   let deckServers: DeckServers;
   let browser: Browser;
@@ -139,5 +139,64 @@ describe('Slidevision overview page', () => {
       },
     ]);
     expect(new URL(presenter.url()).pathname).toBe('/presenter/1');
+  });
+
+  describe('Escape on a slide', () => {
+    const countEndRequests = async (page: Page): Promise<void> => {
+      await page.evaluate(() => {
+        const counter = window as unknown as {
+          endRequests: number;
+        };
+
+        counter.endRequests = 0;
+        window.addEventListener('slidevision:end-presentation', () => {
+          counter.endRequests += 1;
+        });
+      });
+    };
+
+    const endRequests = (page: Page): Promise<number> => {
+      return page.evaluate(() => {
+        return (
+          window as unknown as {
+            endRequests: number;
+          }
+        ).endRequests;
+      });
+    };
+
+    it('asks to end the presentation', async () => {
+      const page = await openPage('2');
+
+      await page.getByText('Middle', { exact: true }).first().waitFor();
+      await countEndRequests(page);
+      await page.keyboard.press('Escape');
+
+      expect(await endRequests(page)).toBe(1);
+    });
+
+    it('only closes the overview when it is open', async () => {
+      const page = await openPage('2');
+
+      await page.getByText('Middle', { exact: true }).first().waitFor();
+      await countEndRequests(page);
+      await page.keyboard.press('o');
+      await page.waitForTimeout(500);
+      await page.keyboard.press('Escape');
+
+      expect(await endRequests(page)).toBe(0);
+    });
+
+    it('only closes the go-to dialog when it is open', async () => {
+      const page = await openPage('2');
+
+      await page.getByText('Middle', { exact: true }).first().waitFor();
+      await countEndRequests(page);
+      await page.keyboard.press('g');
+      await page.waitForTimeout(500);
+      await page.keyboard.press('Escape');
+
+      expect(await endRequests(page)).toBe(0);
+    });
   });
 });

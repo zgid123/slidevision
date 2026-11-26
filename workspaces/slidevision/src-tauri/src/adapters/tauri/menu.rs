@@ -1,6 +1,7 @@
 use tauri::menu::{Menu, MenuEvent, MenuItemKind, Submenu};
 use tauri::{AppHandle, Wry};
 
+use crate::modules::presentation::adapters::tauri::wire as presentation;
 use crate::modules::projects::adapters::tauri::menu as projects;
 
 const FILE_MENU: &str = "File";
@@ -17,6 +18,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
 }
 
 pub fn handle(app: &AppHandle, event: MenuEvent) {
+    presentation::end(app);
     projects::handle(app, &event);
 }
 

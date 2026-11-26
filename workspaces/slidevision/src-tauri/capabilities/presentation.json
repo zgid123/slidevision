@@ -1,0 +1,17 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "presentation",
+  "description": "What the Slidev slides and presenter windows may do",
+  "windows": [
+    "slides",
+    "presenter"
+  ],
+  "remote": {
+    "urls": [
+      "http://localhost:*"
+    ]
+  },
+  "permissions": [
+    "allow-end-presentation"
+  ]
+}

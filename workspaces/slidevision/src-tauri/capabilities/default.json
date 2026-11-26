@@ -7,6 +7,12 @@
   ],
   "permissions": [
     "core:default",
-    "dialog:allow-open"
+    "dialog:allow-open",
+    "allow-open-project",
+    "allow-close-project",
+    "allow-recent-projects",
+    "allow-remove-recent-project",
+    "allow-start-deck",
+    "allow-play"
   ]
 }

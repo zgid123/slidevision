@@ -1,6 +1,7 @@
 use tauri::RunEvent;
 
 use super::{menu, wire};
+use crate::modules::presentation::adapters::tauri::commands as presentation;
 use crate::modules::projects::adapters::tauri::commands as projects;
 
 pub fn run() {
@@ -18,7 +19,9 @@ pub fn run() {
             projects::close_project,
             projects::recent_projects,
             projects::remove_recent_project,
-            projects::start_deck
+            projects::start_deck,
+            presentation::play,
+            presentation::end_presentation
         ])
         .build(tauri::generate_context!())
         .expect("error while building Slidevision")
