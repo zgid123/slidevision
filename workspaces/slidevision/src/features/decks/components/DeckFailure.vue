@@ -12,21 +12,31 @@ defineEmits<{
 <template>
   <section
     role="alert"
-    class="rounded-lg border border-stroke-secondary bg-primary p-6"
+    class="mx-auto mt-8 flex max-w-3xl flex-col gap-4 rounded-2xl border border-stroke-primary bg-primary p-6"
   >
-    <h3 class="m-0 text-lg font-medium">{{ deckName }} could not start</h3>
-    <p class="mt-2 text-sm text-foreground-secondary">
-      Fix the problem below, then try again.
-    </p>
+    <div class="flex gap-3.5">
+      <span
+        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+      >
+        <span class="i-lucide-triangle-alert text-xl" aria-hidden="true" />
+      </span>
+      <div>
+        <h3 class="m-0 text-base font-semibold">
+          {{ deckName }} could not start
+        </h3>
+        <p class="mt-0.5 mb-0 text-sm text-foreground-secondary">
+          Fix the problem below, then try again.
+        </p>
+      </div>
+    </div>
     <pre
-      class="mt-4 max-h-96 overflow-auto whitespace-pre-wrap rounded-md bg-secondary p-4 text-xs"
+      class="m-0 max-h-96 overflow-auto rounded-xl bg-secondary px-4 py-3.5 font-mono text-xs leading-relaxed whitespace-pre-wrap"
     >{{ error }}</pre>
-    <button
-      type="button"
-      class="mt-4 rounded-md bg-foreground-primary px-4 py-2 text-sm font-medium text-primary hover:bg-foreground-secondary"
-      @click="$emit('retry')"
-    >
-      Retry
-    </button>
+    <div>
+      <button type="button" class="btn-primary" @click="$emit('retry')">
+        <span class="i-lucide-rotate-cw text-sm" aria-hidden="true" />
+        Retry
+      </button>
+    </div>
   </section>
 </template>

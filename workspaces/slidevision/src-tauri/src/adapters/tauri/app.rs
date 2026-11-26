@@ -10,6 +10,9 @@ pub fn run() {
         .setup(|app| {
             wire::wire(app)?;
 
+            #[cfg(target_os = "macos")]
+            super::window::hide_traffic_lights(app)?;
+
             Ok(())
         })
         .menu(menu::build)

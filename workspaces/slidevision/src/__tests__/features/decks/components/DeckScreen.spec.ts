@@ -109,6 +109,9 @@ describe('#DeckScreen', () => {
       await flushPromises();
 
       expect(wrapper.find('iframe').exists()).toBe(false);
+      expect(wrapper.get('[data-presenting]').text()).toContain(
+        'Presenting from slide 1',
+      );
 
       await emit('presentation-changed', false);
       await flushPromises();
@@ -237,6 +240,28 @@ describe('#DeckScreen', () => {
             slide: 3,
           },
         ]);
+      });
+
+      it('names the slide it starts from', async () => {
+        const { wrapper } = mountScreen();
+
+        await flushPromises();
+
+        expect(playButton(wrapper).text()).toBe('Play');
+
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://localhost:3030',
+            data: {
+              source: 'slidevision',
+              type: 'select',
+              no: 3,
+            },
+          }),
+        );
+        await flushPromises();
+
+        expect(playButton(wrapper).text()).toBe('Play from 3');
       });
     });
 
