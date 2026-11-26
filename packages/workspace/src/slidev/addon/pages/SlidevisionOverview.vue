@@ -113,24 +113,56 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .slidevision-overview {
-  --slidevision-background: #f5f5f5;
-  --slidevision-surface: #fafafa;
-  --slidevision-stroke: #e5e5e5;
-  --slidevision-stroke-hover: #a3a3a3;
-  --slidevision-foreground: #0a0a0a;
-  --slidevision-foreground-muted: #737373;
+  --slidevision-neutral-50: oklch(98.5% 0 0);
+  --slidevision-neutral-100: oklch(97% 0 0);
+  --slidevision-neutral-200: oklch(92.2% 0 0);
+  --slidevision-neutral-400: oklch(70.8% 0 0);
+  --slidevision-neutral-600: oklch(43.9% 0 0);
+  --slidevision-neutral-800: oklch(26.9% 0 0);
+  --slidevision-neutral-950: oklch(14.5% 0 0);
+  --slidevision-indigo-100: oklch(93% 0.034 272.788);
+  --slidevision-indigo-600: oklch(51.1% 0.262 276.966);
+  --slidevision-indigo-900: oklch(35.9% 0.144 278.697);
+  --slidevision-white: oklch(100% 0 0);
+
+  --slidevision-background: var(--slidevision-neutral-100);
+  --slidevision-stroke: var(--slidevision-neutral-200);
+  --slidevision-stroke-hover: var(--slidevision-neutral-400);
+  --slidevision-badge: var(--slidevision-neutral-200);
+  --slidevision-foreground: var(--slidevision-neutral-950);
+  --slidevision-foreground-muted: var(--slidevision-neutral-600);
+  --slidevision-accent: var(--slidevision-indigo-600);
+  --slidevision-accent-soft: var(--slidevision-indigo-100);
+  --slidevision-on-accent: var(--slidevision-white);
 
   position: fixed;
   inset: 0;
   overflow-y: auto;
+  scrollbar-width: none;
   background: var(--slidevision-background);
+}
+
+.slidevision-overview::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .slidevision-overview {
+    --slidevision-background: var(--slidevision-neutral-950);
+    --slidevision-stroke: var(--slidevision-neutral-800);
+    --slidevision-stroke-hover: var(--slidevision-neutral-600);
+    --slidevision-badge: var(--slidevision-neutral-800);
+    --slidevision-foreground: var(--slidevision-neutral-50);
+    --slidevision-foreground-muted: var(--slidevision-neutral-400);
+    --slidevision-accent-soft: var(--slidevision-indigo-900);
+  }
 }
 
 .slidevision-grid {
   display: grid;
   gap: 1.5rem;
   margin: 0;
-  padding: 0.25rem;
+  padding: 0.375rem;
   list-style: none;
 }
 
@@ -138,39 +170,68 @@ onBeforeUnmount(() => {
   display: block;
   width: 100%;
   padding: 0;
-  overflow: hidden;
-  border: 2px solid var(--slidevision-stroke);
-  border-radius: 0.5rem;
-  background: var(--slidevision-surface);
+  border: 0;
+  border-radius: 0.625rem;
+  background: transparent;
   text-align: left;
   cursor: pointer;
 }
 
-.slidevision-card:hover {
-  border-color: var(--slidevision-stroke-hover);
-}
-
-.slidevision-card--selected,
-.slidevision-card--selected:hover {
-  border-color: var(--slidevision-foreground);
+.slidevision-card:focus-visible {
+  outline: 2px solid var(--slidevision-accent);
+  outline-offset: 6px;
 }
 
 .slidevision-card__slide {
+  overflow: hidden;
+  border-radius: 0.625rem;
+  box-shadow: 0 0 0 1px var(--slidevision-stroke);
   pointer-events: none;
+}
+
+.slidevision-card--selected .slidevision-card__slide {
+  box-shadow:
+    0 0 0 2px var(--slidevision-accent),
+    0 0 0 5px var(--slidevision-accent-soft);
+}
+
+.slidevision-card:not(.slidevision-card--selected):hover
+  .slidevision-card__slide {
+  box-shadow: 0 0 0 1px var(--slidevision-stroke-hover);
 }
 
 .slidevision-card__caption {
   display: flex;
-  color: var(--slidevision-foreground);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+  padding: 0.5rem 0.125rem 0;
+  color: var(--slidevision-foreground-muted);
+  font-family:
+    -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
 }
 
 .slidevision-card__no {
-  color: var(--slidevision-foreground-muted);
+  flex: none;
+  min-width: 1.375rem;
+  box-sizing: border-box;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  background: var(--slidevision-badge);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  text-align: center;
+}
+
+.slidevision-card--selected .slidevision-card__caption {
+  color: var(--slidevision-foreground);
+}
+
+.slidevision-card--selected .slidevision-card__no {
+  background: var(--slidevision-accent);
+  color: var(--slidevision-on-accent);
 }
 
 .slidevision-card__title {

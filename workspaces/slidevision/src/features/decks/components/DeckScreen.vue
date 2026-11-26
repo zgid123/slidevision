@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { IDeck } from '@contracts/project';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 import { presentationApi } from '#/features/presentation/api';
 
@@ -26,6 +26,14 @@ const deckSlides = useDeckSlides({
 const isOverviewLoaded = ref(false);
 const playError = ref<string | null>(null);
 const isPresenting = ref(false);
+const selectedSlide = computed(() => {
+  const { view } = deckSlides;
+
+  return view.state === slidesState.ready ? view.selected : 1;
+});
+const playLabel = computed(() => {
+  return selectedSlide.value > 1 ? `Play from ${selectedSlide.value}` : 'Play';
+});
 let stopWatchingPresentation: (() => void) | undefined;
 let isUnmounted = false;
 
@@ -102,31 +110,35 @@ onUnmounted(() => {
 
 <template>
   <section class="flex h-full flex-col">
-    <div class="mb-6 flex shrink-0 items-center gap-4">
+    <div class="mb-5 flex shrink-0 items-center gap-3">
       <button
         v-if="canGoBack"
         type="button"
-        class="shrink-0 rounded-md border border-stroke-secondary px-3 py-1.5 text-sm hover:bg-tertiary"
+        class="btn-ghost -ml-3"
         @click="$emit('back')"
       >
-        ← All decks
+        <span class="i-lucide-chevron-left text-base" aria-hidden="true" />
+        All decks
       </button>
-      <h2 class="m-0 min-w-0 flex-1 truncate text-xl font-semibold">
+      <h2
+        class="m-0 min-w-0 flex-1 truncate text-xl font-semibold tracking-tight"
+      >
         {{ deck.name }}
       </h2>
       <button
         type="button"
-        class="shrink-0 rounded-md bg-foreground-primary px-4 py-1.5 text-sm font-medium text-primary hover:bg-foreground-secondary disabled:opacity-40"
-        :disabled="deckSlides.view.state !== slidesState.ready"
+        class="btn-primary"
+        :disabled="deckSlides.view.state !== slidesState.ready || isPresenting"
         @click="play"
       >
-        ▶ Play
+        <span class="i-lucide-play text-sm" aria-hidden="true" />
+        {{ playLabel }}
       </button>
     </div>
     <p
       v-if="playError"
       role="alert"
-      class="mt-0 mb-4 shrink-0 text-sm text-foreground-secondary"
+      class="mt-0 mb-4 shrink-0 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
     >
       {{ playError }}
     </p>
@@ -137,6 +149,23 @@ onUnmounted(() => {
         :error="deckSlides.view.error"
         @retry="retry"
       />
+      <section
+        v-else-if="isPresenting"
+        class="flex h-full flex-col items-center justify-center gap-3 pb-16 text-center"
+        data-presenting
+      >
+        <span
+          class="flex size-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+        >
+          <span class="i-lucide-presentation text-3xl" aria-hidden="true" />
+        </span>
+        <h3 class="mt-1 mb-0 text-lg font-semibold">
+          Presenting from slide {{ selectedSlide }}
+        </h3>
+        <p class="m-0 max-w-md text-sm text-foreground-secondary">
+          The slides come back here when the presentation ends.
+        </p>
+      </section>
       <template v-else>
         <CardGridSkeleton
           v-if="!isOverviewLoaded"
@@ -144,7 +173,7 @@ onUnmounted(() => {
           class="absolute inset-0 overflow-hidden"
         />
         <iframe
-          v-if="deckSlides.view.state === slidesState.ready && !isPresenting"
+          v-if="deckSlides.view.state === slidesState.ready"
           :src="overviewSrc({ url: deckSlides.view.url })"
           :title="`Slides of ${deck.name}`"
           :data-selected-slide="deckSlides.view.selected"

@@ -266,6 +266,9 @@ importers:
       '@contracts/project':
         specifier: workspace:*
         version: link:../../packages/@contracts/project
+      '@iconify-json/lucide':
+        specifier: 1.2.159
+        version: 1.2.159
       '@slidevision/workspace':
         specifier: workspace:*
         version: link:../../packages/workspace
@@ -659,6 +662,9 @@ packages:
 
   '@iconify-json/carbon@1.2.30':
     resolution: {integrity: sha512-54GoLfi17qzhbdwOAbYvzpRBz2QNYAekghLyEHv1GpQN/Jmd3c/la8T71109n8lfmyWknPcLi/+OTAIT1VL0IA==}
+
+  '@iconify-json/lucide@1.2.159':
+    resolution: {integrity: sha512-rE8dHb2LRSR2Vl6L6LspAJ83uPNKOIbEE8BLLo/ObQT8xHIEE3zmwIpO9LcZPjTsEnICSxWPFJcJ0Q38nxuZPw==}
 
   '@iconify-json/ph@1.2.2':
     resolution: {integrity: sha512-PgkEZNtqa8hBGjHXQa4pMwZa93hmfu8FUSjs/nv4oUU6yLsgv+gh9nu28Kqi8Fz9CCVu4hj1MZs9/60J57IzFw==}
@@ -4585,6 +4591,10 @@ snapshots:
       hono: 4.13.21
 
   '@iconify-json/carbon@1.2.30':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/lucide@1.2.159':
     dependencies:
       '@iconify/types': 2.0.0
 
