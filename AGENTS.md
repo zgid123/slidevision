@@ -14,7 +14,7 @@ Slidevision is a pnpm and Turbo monorepo. It will hold Slidev decks and a deskto
 - `.agents/skills/`: project skills, installed from `zgid123/skills` and pinned in `skills-lock.json`. `.claude/skills/` links to the same folders.
 - `biome.json`, `tsconfig.json`, `lefthook.yml`: lint, type-check and pre-commit settings, extending `@alphacifer/biome` and `@alphacifer/tsconfig`.
 - `.changeset/`, `.github/workflows/release.yml`: Changesets configuration and the release workflow, which uses the shared Node.js and pnpm setup action from `zgid123/alpha-dx`.
-- `.github/workflows/test.yml`: runs the tests of packages affected by a pull request, using the same setup action and Playwright's Chromium, and on macOS and Windows runs `cargo test --workspace` and a `tauri build --no-bundle` compile check of the desktop app.
+- `.github/workflows/test.yml`: runs the tests of packages affected by a pull request, using the same setup action and Playwright's Chromium, and on macOS and Windows builds the desktop app's web files, which the Tauri crate needs to compile, then runs `cargo test --workspace`.
 - `turbo.json`: `build` (outputs `dist/**` and `lib/**`), `test`, and `dev` tasks.
 
 ## Working conventions
